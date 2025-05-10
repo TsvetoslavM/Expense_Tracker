@@ -16,6 +16,8 @@
   <img src="https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite"/>
 </p>
 
+<img scr="expense-tracker-zwetoslaw-gmailcoms-projects.vercel.app" alt="You can try it">
+
 </div>
 
 ## 📋 Features
@@ -28,9 +30,6 @@
 - **🌈 Customizable Categories**: Organize expenses your way with colored categories
 - **🔐 Secure Authentication**: Keep your financial data private
 
-<div align="center">
-  <img width="100%" alt="App Screenshot" src="https://github.com/yourusername/expense-tracker/raw/main/docs/images/dashboard-preview.png">
-</div>
 
 ## 🚀 Quick Start
 
