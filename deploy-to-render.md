@@ -1,6 +1,6 @@
-# Deploying Expense Tracker to Render
+# Deploying Expense Tracker to Render with SQLite
 
-This guide explains how to deploy the Expense Tracker application to Render.
+This guide explains how to deploy the Expense Tracker application to Render using SQLite.
 
 ## Prerequisites
 
@@ -18,13 +18,13 @@ This guide explains how to deploy the Expense Tracker application to Render.
    - **Name**: `expense-tracker-api` (or your preferred name)
    - **Root Directory**: `backend`
    - **Environment**: `Python 3`
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+   - **Build Command**: `chmod +x render-build.sh && ./render-build.sh`
+   - **Start Command**: `python verify_db.py && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
    - **Plan**: Free (or select a plan that suits your needs)
 
 5. Add the following environment variables:
    - `DEBUG`: `false`
-   - `USE_SQLITE`: `false`
+   - `USE_SQLITE`: `true`
    - `SECRET_KEY`: (generate a secure random string)
    - `ACCESS_TOKEN_EXPIRE_MINUTES`: `60`
    - `FRONTEND_URL`: (your frontend URL, once you have it)
@@ -32,22 +32,7 @@ This guide explains how to deploy the Expense Tracker application to Render.
 
 6. Click "Create Web Service"
 
-### 2. Create a PostgreSQL Database
-
-1. From your Render dashboard, click "New" and select "PostgreSQL"
-2. Configure the database:
-   - **Name**: `expense-tracker-db` (or your preferred name)
-   - **Database**: `expense_tracker`
-   - **User**: (auto-generated)
-   - **Plan**: Free (or select a plan that suits your needs)
-3. Click "Create Database"
-4. Once created, go to your database dashboard and copy the "Internal Database URL"
-5. Add this as an environment variable to your backend service:
-   - Go to your backend service dashboard
-   - Click "Environment" 
-   - Add environment variable `DATABASE_URL` with the Internal Database URL value
-
-### 3. Deploy the Frontend
+### 2. Deploy the Frontend
 
 1. From your Render dashboard, click "New" and select "Web Service"
 2. Connect your GitHub repository again
@@ -56,13 +41,22 @@ This guide explains how to deploy the Expense Tracker application to Render.
    - **Root Directory**: `frontend`
    - **Environment**: `Node`
    - **Build Command**: `npm install && npm run build`
-   - **Start Command**: `npm start`
+   - **Start Command**: `node render-start.js`
    - **Plan**: Free (or select a plan that suits your needs)
 
 4. Add environment variables:
    - `NEXT_PUBLIC_API_URL`: (your backend API URL)
 
 5. Click "Create Web Service"
+
+### 3. Initialize the Database
+
+1. Go to your backend service dashboard in Render
+2. Navigate to "Shell"
+3. Run the following command to create test user and default data:
+   ```
+   python initialize_render_db.py
+   ```
 
 ### 4. Update Frontend-Backend Connection
 
@@ -71,14 +65,14 @@ This guide explains how to deploy the Expense Tracker application to Render.
 3. Update the `FRONTEND_URL` environment variable with your frontend URL
 4. Update the `BACKEND_CORS_ORIGINS` with your frontend URL in JSON array format
 
-### 5. Initialize the Database
+## Important Notes About SQLite on Render
 
-1. Go to your backend service dashboard in Render
-2. Navigate to "Shell"
-3. Run the following command to create test user and default data:
-   ```
-   python -c "from app.core.database import init_db; init_db()"
-   ```
+1. **Ephemeral Filesystem**: By default, Render's free tier has an ephemeral filesystem, meaning that files (including your SQLite database) will be lost when the service restarts. Our code attempts to use Render's persistent storage at `/opt/render/project/data/` if it exists.
+
+2. **Data Persistence Options**:
+   - **Disk Persistence Add-on**: You can add disk persistence to your Render service (paid feature)
+   - **Regular Database Backups**: Schedule scripts to export and back up your database
+   - **Use PostgreSQL**: For a production app, consider using Render's PostgreSQL service instead
 
 ## Testing Your Deployment
 
@@ -90,13 +84,13 @@ This guide explains how to deploy the Expense Tracker application to Render.
 
 ## Troubleshooting
 
-- **CORS Issues**: Make sure the backend's `BACKEND_CORS_ORIGINS` includes your frontend URL
-- **Database Connection Issues**: Verify the `DATABASE_URL` environment variable is correct
+- **Database Issues**: If the database fails to initialize, run `python initialize_render_db.py` through the Shell
 - **API Connection Failures**: Check that `NEXT_PUBLIC_API_URL` in the frontend points to your backend service
+- **CORS Issues**: Make sure the backend's `BACKEND_CORS_ORIGINS` includes your frontend URL
 
 ## Switching Back to Development Mode
 
 When working locally, make sure to:
-1. Set `USE_SQLITE` to `true` in your `.env` file
+1. Keep `USE_SQLITE` set to `true` (same as production)
 2. Set `DEBUG` to `true`
 3. Update API URLs to use localhost 

@@ -10,32 +10,49 @@ from app.core.config import settings
 IS_TESTING = 'pytest' in sys.modules or 'sqlite' in str(settings.DATABASE_URL).lower()
 
 # Create database engine based on URL
-if IS_TESTING or 'sqlite' in str(settings.DATABASE_URL).lower():
-    print(f"Using SQLite database at: {settings.DATABASE_URL}")
-    # For SQLite, enforce absolute path to avoid multiple database files
-    if 'sqlite:///' in str(settings.DATABASE_URL).lower():
-        # Convert to absolute path if it's not already
-        import os
-        db_path = settings.DATABASE_URL.replace('sqlite:///','')
-        if db_path.startswith('./'):
-            db_path = db_path[2:]  # Remove the ./ prefix
-        absolute_path = os.path.abspath(db_path)
-        # Create absolute database URL
-        absolute_db_url = f"sqlite:///{absolute_path}"
-        print(f"Converting relative path to absolute: {absolute_db_url}")
-        connect_args = {"check_same_thread": False}
-        engine = create_engine(
-            absolute_db_url, connect_args=connect_args
-        )
+try:
+    if IS_TESTING or 'sqlite' in str(settings.DATABASE_URL).lower():
+        print(f"Using SQLite database at: {settings.DATABASE_URL}")
+        # For SQLite, enforce absolute path to avoid multiple database files
+        if 'sqlite:///' in str(settings.DATABASE_URL).lower():
+            # Convert to absolute path if it's not already
+            import os
+            db_path = settings.DATABASE_URL.replace('sqlite:///','')
+            if db_path.startswith('./'):
+                db_path = db_path[2:]  # Remove the ./ prefix
+            
+            # On Render, use a persistent volume path if available
+            if os.environ.get('RENDER') and os.path.exists('/opt/render/project/data'):
+                print("Running on Render, using persistent volume for SQLite database")
+                absolute_path = '/opt/render/project/data/expense_tracker.db'
+            else:
+                absolute_path = os.path.abspath(db_path)
+            
+            # Create absolute database URL
+            absolute_db_url = f"sqlite:///{absolute_path}"
+            print(f"Converting relative path to absolute: {absolute_db_url}")
+            connect_args = {"check_same_thread": False}
+            engine = create_engine(
+                absolute_db_url, connect_args=connect_args
+            )
+        else:
+            connect_args = {"check_same_thread": False} if 'sqlite' in str(settings.DATABASE_URL).lower() else {}
+            engine = create_engine(
+                settings.DATABASE_URL, connect_args=connect_args
+            )
     else:
-        connect_args = {"check_same_thread": False} if 'sqlite' in str(settings.DATABASE_URL).lower() else {}
+        print(f"Using PostgreSQL database at: {settings.DATABASE_URL}")
         engine = create_engine(
-            settings.DATABASE_URL, connect_args=connect_args
+            settings.DATABASE_URL
         )
-else:
-    print(f"Using PostgreSQL database at: {settings.DATABASE_URL}")
+except Exception as e:
+    print(f"Error connecting to database: {str(e)}")
+    print(f"Falling back to SQLite database")
+    # Fallback to SQLite if PostgreSQL connection fails
+    fallback_db_url = "sqlite:///./fallback.db"
+    connect_args = {"check_same_thread": False}
     engine = create_engine(
-        settings.DATABASE_URL
+        fallback_db_url, connect_args=connect_args
     )
 
 # Create a SessionLocal class that will be used to create a session/connection to the database

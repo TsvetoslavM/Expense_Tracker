@@ -16,7 +16,10 @@ const api = axios.create({
 console.log('API Configuration:', {
   baseURL: api.defaults.baseURL,
   withCredentials: api.defaults.withCredentials,
-  timeout: api.defaults.timeout
+  timeout: api.defaults.timeout,
+  environment: process.env.NODE_ENV,
+  apiUrl: process.env.NEXT_PUBLIC_API_URL || 'not set (using default)',
+  renderServiceUrl: process.env.RENDER_EXTERNAL_URL || 'not set',
 })
 
 // Add request interceptor to add auth token to requests
