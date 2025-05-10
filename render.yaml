@@ -15,7 +15,7 @@ services:
       - key: FRONTEND_URL
         value: https://expense-tracker-tan-sigma.vercel.app
       - key: BACKEND_CORS_ORIGINS
-        value: '["https://expense-tracker-tan-sigma.vercel.app", "https://expense-tracker-zwetoslaw-gmailcoms-projects.vercel.app", "https://expense-tracker-api-un6a.onrender.com"]'
+        value: '["https://expense-tracker-tan-sigma.vercel.app", "https://expense-tracker-zwetoslaw-gmailcoms-projects.vercel.app", "https://expense-tracker-api-un6a.onrender.com", "*"]'
       - key: SECRET_KEY
         generateValue: true  # Generate a secure random value
 
@@ -27,6 +27,6 @@ services:
     startCommand: cd frontend && node render-start.js
     envVars:
       - key: NEXT_PUBLIC_API_URL
-        value: https://expense-tracker-api.onrender.com  # Update with your backend URL
+        value: https://expense-tracker-api-un6a.onrender.com  # Corrected URL
 
 # We don't need a database service since we're using SQLite 

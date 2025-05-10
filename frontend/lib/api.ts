@@ -9,10 +9,10 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  // Important for handling CORS issues
+  // IMPORTANT: Set to false to avoid CORS preflight issues
   withCredentials: false,
   // Add timeout to prevent hanging requests
-  timeout: 10000,
+  timeout: 15000, // Increased timeout for slower connections
 })
 
 // Log API configuration for debugging

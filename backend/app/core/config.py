@@ -44,7 +44,8 @@ class Settings(BaseSettings):
         "http://localhost:3000",  # Local development
         "https://expense-tracker-tan-sigma.vercel.app",  # Production Vercel URL
         "https://expense-tracker-zwetoslaw-gmailcoms-projects.vercel.app",  # Alternative Vercel URL
-        "https://expense-tracker-api-un6a.onrender.com"  # Render API URL
+        "https://expense-tracker-api-un6a.onrender.com",  # Render API URL
+        "*"  # Temporarily allow all origins while debugging
     ]
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")

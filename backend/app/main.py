@@ -7,7 +7,7 @@ from fastapi import HTTPException, status
 
 from app.core.config import settings
 from app.core.database import get_db, init_db, SessionLocal
-from app.routers import auth, users, expenses, categories, budgets, reports, financial_reports
+from app.routers import auth, users, expenses, categories, budgets, reports, financial_reports, debug
 from app.core.deps import get_current_active_user
 from app.models.user import User
 
@@ -18,13 +18,14 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Configure CORS - use settings from config
+# Configure CORS - more permissive for debugging
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origins=["*"],  # Temporarily allow all origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Include all routers
@@ -35,6 +36,7 @@ app.include_router(categories.router, prefix="/api/categories", tags=["Categorie
 app.include_router(budgets.router, prefix="/api/budgets", tags=["Budgets"])
 app.include_router(reports.router, prefix="/api/reports", tags=["Reports"])
 app.include_router(financial_reports.router, prefix="/api/financial_reports", tags=["Financial Reports"])
+app.include_router(debug.router, prefix="/api", tags=["Debug"])
 
 # Health check endpoint
 @app.get("/api/health", tags=["Health"])

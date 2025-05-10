@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://expense-tracker-api.onrender.com/api/:path*"
+      "destination": "https://expense-tracker-api-un6a.onrender.com/api/:path*"
     }
   ],
   "env": {
