@@ -185,8 +185,19 @@ export const expenseAPI = {
       limit: 100
     };
     
+    // Ensure dates are in proper ISO format (YYYY-MM-DD)
+    const formattedParams = { ...params };
+    if (formattedParams.start_date && !formattedParams.start_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const date = new Date(formattedParams.start_date);
+      formattedParams.start_date = date.toISOString().split('T')[0];
+    }
+    if (formattedParams.end_date && !formattedParams.end_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const date = new Date(formattedParams.end_date);
+      formattedParams.end_date = date.toISOString().split('T')[0];
+    }
+    
     // Merge user provided params with defaults
-    const requestParams = { ...defaultParams, ...params };
+    const requestParams = { ...defaultParams, ...formattedParams };
     
     try {
       const response = await api.get('/api/expenses', { 
@@ -212,8 +223,20 @@ export const expenseAPI = {
     notes?: string
     attachment_url?: string
   }) => {
-    const response = await api.post('/api/expenses', expenseData)
-    return response.data
+    // Ensure date is in proper format
+    const formattedData = { ...expenseData };
+    if (formattedData.date && !formattedData.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const date = new Date(formattedData.date);
+      formattedData.date = date.toISOString().split('T')[0];
+    }
+
+    try {
+      const response = await api.post('/api/expenses', formattedData);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating expense:', error);
+      throw error;
+    }
   },
   updateExpense: async (id: number, expenseData: any) => {
     const response = await api.put(`/api/expenses/${id}`, expenseData)
