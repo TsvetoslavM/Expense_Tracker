@@ -218,7 +218,7 @@ export const expenseAPI = {
     amount: number
     date: string
     category_id: number
-    description?: string
+    description: string
     currency?: string
     notes?: string
     attachment_url?: string
@@ -230,11 +230,37 @@ export const expenseAPI = {
       formattedData.date = date.toISOString().split('T')[0];
     }
 
+    // Ensure amount is a number (not a string)
+    if (typeof formattedData.amount === 'string') {
+      formattedData.amount = parseFloat(formattedData.amount);
+    }
+
+    // Ensure category_id is a number
+    if (typeof formattedData.category_id === 'string') {
+      formattedData.category_id = parseInt(formattedData.category_id, 10);
+    }
+
+    // Add default currency if missing
+    if (!formattedData.currency) {
+      formattedData.currency = 'USD';
+    }
+
+    // Add empty description if missing
+    if (!formattedData.description) {
+      formattedData.description = '';
+    }
+
     try {
-      const response = await api.post('/api/expenses', formattedData);
+      console.log('Sending expense data:', formattedData);
+      const response = await api.post('/api/expenses/', formattedData);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating expense:', error);
+      // Log detailed error information
+      if (error.response) {
+        console.error('Response data:', error.response.data);
+        console.error('Response status:', error.response.status);
+      }
       throw error;
     }
   },
