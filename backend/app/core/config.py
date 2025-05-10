@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     USE_SQLITE: bool = False
     
     # CORS settings
-    BACKEND_CORS_ORIGINS: Union[str, List[str]] = ["http://localhost:3000", "http://localhost:8000"]
+    BACKEND_CORS_ORIGINS: Union[str, List[str]] = ["https://expense-tracker-zwetoslaw-gmailcoms-projects.vercel.app", "http://localhost:3000"]
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod
