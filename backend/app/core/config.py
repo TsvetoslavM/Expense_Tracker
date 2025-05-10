@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     USE_SQLITE: bool = False
     
     # CORS settings
-    BACKEND_CORS_ORIGINS: Union[str, List[str]] = ["https://expense-tracker-git-master-zwetoslaw-gmailcoms-projects.vercel.app", "https://expense-tracker-api-un6a.onrender.com"]
+    BACKEND_CORS_ORIGINS: Union[str, List[str]] = ["https://expense-tracker-git-master-zwetoslaw-gmailcoms-projects.vercel.app", "http://localhost:8000"]
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod
@@ -140,7 +140,7 @@ class TestSettings(BaseSettings):
     FRONTEND_URL: str = "https://expense-tracker-git-master-zwetoslaw-gmailcoms-projects.vercel.app"
     
     # Add a list of allowed CORS origins for testing
-    BACKEND_CORS_ORIGINS: List[str] = ["https://expense-tracker-git-master-zwetoslaw-gmailcoms-projects.vercel.app", "https://expense-tracker-api-un6a.onrender.com"]
+    BACKEND_CORS_ORIGINS: List[str] = ["https://expense-tracker-git-master-zwetoslaw-gmailcoms-projects.vercel.app", "http://localhost:8000"]
     
     # Configuration for TestSettings
     model_config = SettingsConfigDict(
