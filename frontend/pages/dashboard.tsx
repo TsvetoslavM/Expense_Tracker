@@ -31,6 +31,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { StatCard } from '@/components/StatCard'
 import PageContainer from '@/components/layout/PageContainer'
+import ApiDebug from '../components/ApiDebug'
 
 // Define interface for expenses
 interface Expense {
@@ -319,6 +320,7 @@ export default function DashboardPage() {
   
   return (
     <PageContainer>
+      <ApiDebug />
       {/* Dashboard header */}
       <div className="mb-8">
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg p-8 text-white">
