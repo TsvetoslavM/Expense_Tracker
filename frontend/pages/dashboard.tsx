@@ -315,7 +315,7 @@ export default function DashboardPage() {
   
   return (
     <PageContainer>
-      <ApiDebug />
+      {/* <ApiDebug /> */}
       {/* Dashboard header */}
       <div className="mb-8">
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg p-8 text-white">
