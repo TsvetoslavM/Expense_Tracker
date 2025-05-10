@@ -1,25 +1,162 @@
-# Expense Tracker
+<div align="center">
 
-A comprehensive financial management application built with FastAPI and Next.js that helps users track expenses, manage budgets, and generate insightful reports.
+# 💰 Expense Tracker
 
-## Features
+<img src="https://img.shields.io/badge/version-1.0.0-blue.svg?style=for-the-badge" alt="Version 1.0.0"/>
+<img src="https://img.shields.io/badge/license-MIT-green.svg?style=for-the-badge" alt="License MIT"/>
 
-- **User Authentication**: Secure login/registration system with JWT authentication
-- **Expense Management**: Add, edit, and delete expenses with categories and tags
-- **Budget Planning**: Create monthly or yearly budgets for different expense categories
-- **Reporting**: Generate detailed PDF and CSV reports of your spending habits
-- **Data Visualization**: Interactive charts and graphs to visualize your financial data
-- **Category Management**: Customize expense categories with colors and icons
-- **Responsive Design**: Works on desktop and mobile devices
+**Manage your finances with ease. Track expenses, set budgets, and visualize your financial journey.**
 
-## Tech Stack
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js"/>
+  <img src="https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi" alt="FastAPI"/>
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript"/>
+  <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python"/>
+  <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS"/>
+  <img src="https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite"/>
+</p>
+
+</div>
+
+## 📋 Features
+
+- **📊 Dynamic Dashboard**: Get a visual overview of your financial health
+- **💸 Expense Management**: Easily track where your money goes
+- **💹 Budget Planning**: Set meaningful spending limits by category
+- **📝 Detailed Reports**: Generate PDF and CSV reports of your finances
+- **📱 Responsive Design**: Works seamlessly on desktop, tablet, and mobile
+- **🌈 Customizable Categories**: Organize expenses your way with colored categories
+- **🔐 Secure Authentication**: Keep your financial data private
+
+<div align="center">
+  <img width="100%" alt="App Screenshot" src="https://github.com/yourusername/expense-tracker/raw/main/docs/images/dashboard-preview.png">
+</div>
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js 16+
+- Python 3.9+
+- npm or yarn
+
+### Getting Started (All-in-One)
+
+For convenience, you can start both services at once:
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/expense-tracker.git
+cd expense-tracker
+
+# Start both backend and frontend
+node start-dev.js
+```
+
+The frontend will be available at http://localhost:3000 and the backend at http://localhost:8000.
+
+### Default Login
+
+```
+Email: test@example.com
+Password: password123
+```
+
+## 🏛️ Architecture
+
+This project is built with a modern, decoupled architecture:
+
+- **Frontend**: Next.js application with TypeScript, TailwindCSS, and Shadcn UI
+- **Backend**: FastAPI application with SQLAlchemy, Pydantic, and JWT authentication
+- **Database**: SQLite by default (can be configured to use PostgreSQL)
+
+## 📚 Documentation
+
+### Backend
+
+The backend provides a RESTful API for the frontend to consume:
+
+- **Authentication API**: User registration, login, and password reset
+- **Expense API**: CRUD operations for expenses with filtering and sorting
+- **Category API**: Manage expense categories
+- **Budget API**: Create and track budgets by category
+- **Report API**: Generate financial reports in PDF and CSV formats
+
+Comprehensive API documentation is available at http://localhost:8000/docs when the server is running.
+
+### Frontend
+
+The frontend is a modern React application built with Next.js:
+
+- **Dashboard**: Overview of financial status with charts and stats
+- **Expenses**: Manage and filter expenses
+- **Categories**: Create and manage expense categories
+- **Budgets**: Set and track spending budgets
+- **Reports**: Generate and download financial reports
+- **Settings**: Configure user preferences and account details
+
+## 📁 Project Structure
+
+```
+expense-tracker/
+├── backend/              # FastAPI application
+│   ├── app/              # Main application package
+│   │   ├── core/         # Core functionality
+│   │   ├── models/       # Database models
+│   │   ├── routers/      # API endpoints
+│   │   ├── schemas/      # Pydantic models
+│   │   └── services/     # Business logic
+│   ├── tests/            # Test cases
+│   └── run.py            # Server startup script
+├── frontend/             # Next.js application
+│   ├── components/       # Reusable UI components
+│   ├── context/          # React context providers
+│   ├── hooks/            # Custom React hooks
+│   ├── lib/              # Utilities and API clients
+│   ├── pages/            # Next.js pages
+│   └── public/           # Static assets
+└── start-dev.js          # Development startup script
+```
+
+## 💻 Development
+
+### Backend Setup
+
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+python run.py
+```
+
+### Frontend Setup
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+## 📊 Screenshots
+
+<div align="center">
+  <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
+    <img width="45%" alt="Dashboard" src="https://github.com/yourusername/expense-tracker/raw/main/docs/images/dashboard.png">
+    <img width="45%" alt="Expenses" src="https://github.com/yourusername/expense-tracker/raw/main/docs/images/expenses.png">
+    <img width="45%" alt="Categories" src="https://github.com/yourusername/expense-tracker/raw/main/docs/images/categories.png">
+    <img width="45%" alt="Reports" src="https://github.com/yourusername/expense-tracker/raw/main/docs/images/reports.png">
+  </div>
+</div>
+
+## 🛠️ Technologies
 
 ### Backend
 - **FastAPI**: High-performance Python web framework
 - **SQLAlchemy**: ORM for database interactions
 - **Pydantic**: Data validation and settings management
 - **JWT**: Authentication mechanism
-- **SQLite**: Database (can be easily replaced with PostgreSQL, MySQL, etc.)
+- **SQLite**: Database (can be easily replaced with PostgreSQL)
 - **ReportLab**: PDF report generation
 
 ### Frontend
@@ -31,134 +168,35 @@ A comprehensive financial management application built with FastAPI and Next.js 
 - **Zod**: Schema validation
 - **ApexCharts**: Interactive charts
 
-## Getting Started
-
-### Prerequisites
-
-- Python 3.9+
-- Node.js 16+
-- npm or yarn
-
-### Backend Setup
-
-1. Navigate to the backend directory:
-   ```
-   cd backend
-   ```
-
-2. Create and activate a virtual environment:
-   ```
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. Install dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
-
-4. Set up environment variables:
-   ```
-   cp .env.example .env
-   ```
-   Edit the `.env` file with your desired configuration.
-
-5. Run the server:
-   ```
-   python run.py
-   ```
-   The API will be available at http://localhost:8000
-
-### Frontend Setup
-
-1. Navigate to the frontend directory:
-   ```
-   cd frontend
-   ```
-
-2. Install dependencies:
-   ```
-   npm install
-   # or
-   yarn install
-   ```
-
-3. Start the development server:
-   ```
-   npm run dev
-   # or
-   yarn dev
-   ```
-   The application will be available at http://localhost:3000
-
-## Usage
-
-### Login and Registration
-
-- Navigate to the login page and use the default credentials:
-  - Email: `test@example.com`
-  - Password: `password123`
-- Or register a new account
-
-### Adding Expenses
-
-1. Navigate to the Expenses page
-2. Click "Add New Expense"
-3. Fill in the expense details:
-   - Amount
-   - Date
-   - Category
-   - Description (optional)
-   - Notes (optional)
-4. Click "Save"
-
-### Managing Budgets
-
-1. Navigate to the Budgets page
-2. Create a new budget by selecting:
-   - Category
-   - Amount
-   - Period (monthly/yearly)
-3. View budget performance compared to actual spending
-
-### Generating Reports
-
-1. Navigate to the Reports page
-2. Select the report type (PDF or CSV)
-3. Choose the time period (year and optional month)
-4. Select a category (optional)
-5. Click "Generate Report"
-6. The report will be downloaded to your device
-
-## API Endpoints
-
-The backend provides a comprehensive API for all functionality. Key endpoints include:
-
-- **Authentication**: `/api/auth/login`, `/api/auth/register`
-- **Users**: `/api/users/me`
-- **Expenses**: `/api/expenses`, `/api/expenses/{id}`
-- **Categories**: `/api/categories`, `/api/categories/{id}`
-- **Budgets**: `/api/budgets`, `/api/budgets/{id}`
-- **Reports**: `/api/reports/csv`, `/api/reports/pdf`, `/api/reports/summary/annual`
-
-Full API documentation is available at `http://localhost:8000/docs` when the server is running.
-
-## Screenshots
-
-[Include screenshots of key pages here]
-
-## Contributing
+## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## License
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+## 📝 License
 
-## Acknowledgments
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
 
 - [FastAPI](https://fastapi.tiangolo.com/) for the backend framework
 - [Next.js](https://nextjs.org/) for the frontend framework
 - [TailwindCSS](https://tailwindcss.com/) for styling
 - [Shadcn UI](https://ui.shadcn.com/) for UI components
-- [ApexCharts](https://apexcharts.com/) for data visualization 
+- [ApexCharts](https://apexcharts.com/) for data visualization
+
+---
+
+<div align="center">
+  <p>Made with ❤️ for better financial management</p>
+  <p>
+    <a href="https://github.com/yourusername/expense-tracker/issues">Report Bug</a>
+    ·
+    <a href="https://github.com/yourusername/expense-tracker/issues">Request Feature</a>
+  </p>
+</div> 
