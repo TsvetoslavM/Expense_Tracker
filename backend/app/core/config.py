@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     USE_SQLITE: bool = False
     
     # CORS settings
-    BACKEND_CORS_ORIGINS: Union[str, List[str]] = ["http://localhost:3000", "http://localhost:8000"]
+    BACKEND_CORS_ORIGINS: Union[str, List[str]] = ["https://expense-tracker-git-master-zwetoslaw-gmailcoms-projects.vercel.app", "https://expense-tracker-api-un6a.onrender.com"]
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod
@@ -96,7 +96,7 @@ class Settings(BaseSettings):
     MAIL_SSL: bool = False
     
     # Frontend URL for links in emails - use str instead of URL types for compatibility
-    FRONTEND_URL: str = "http://localhost:3000"
+    FRONTEND_URL: str = "https://expense-tracker-git-master-zwetoslaw-gmailcoms-projects.vercel.app"
 
     # Update from Config class to SettingsConfigDict
     model_config = SettingsConfigDict(
@@ -137,10 +137,10 @@ class TestSettings(BaseSettings):
     MAIL_SSL: bool = False
     
     # Testing frontend URL
-    FRONTEND_URL: str = "http://localhost:3000"
+    FRONTEND_URL: str = "https://expense-tracker-git-master-zwetoslaw-gmailcoms-projects.vercel.app"
     
     # Add a list of allowed CORS origins for testing
-    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8000"]
+    BACKEND_CORS_ORIGINS: List[str] = ["https://expense-tracker-git-master-zwetoslaw-gmailcoms-projects.vercel.app", "https://expense-tracker-api-un6a.onrender.com"]
     
     # Configuration for TestSettings
     model_config = SettingsConfigDict(
