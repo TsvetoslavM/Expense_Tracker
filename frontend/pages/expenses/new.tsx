@@ -136,14 +136,15 @@ export default function NewExpensePage() {
     setError('')
     
     try {
-      console.log('Submitting expense data:', {
+      // Log the exact data we're sending
+      console.log('About to submit expense with data:', {
         description: data.description,
         amount: parseFloat(data.amount),
         date: data.date,
         category_id: parseInt(data.category_id),
         notes: data.notes,
         currency: data.currency
-      })
+      });
       
       // Check if token exists for API authentication
       const token = localStorage.getItem('accessToken')
@@ -155,48 +156,36 @@ export default function NewExpensePage() {
       }
 
       // Convert string values to appropriate types
-      try {
-        const response = await expenseAPI.createExpense({
-          description: data.description,
-          amount: parseFloat(data.amount),
-          date: data.date,
-          category_id: parseInt(data.category_id),
-          notes: data.notes,
-          currency: data.currency
-        })
-        
-        console.log('API response:', response)
-        
-        // Verify that the expense was created and has an ID
-        if (response && response.id) {
-          // Add a small delay before redirecting to ensure data is saved
-          setTimeout(() => {
-            // Redirect back to expenses list
-            router.push('/expenses')
-          }, 500)
-        } else {
-          console.error('Expense created but invalid response:', response)
-          setError('Expense was created but the server returned an invalid response')
-          setLoading(false)
-        }
-      } catch (apiError: any) {
-        console.error('API request error:', apiError)
-        console.error('Request details:', {
-          url: apiError.config?.url,
-          method: apiError.config?.method,
-          headers: apiError.config?.headers,
-          status: apiError.response?.status,
-          statusText: apiError.response?.statusText
-        })
-        console.error('Error data:', apiError.response?.data)
-        
-        setError(apiError.response?.data?.detail || 'Failed to create expense. Server error.')
+      const response = await expenseAPI.createExpense({
+        description: data.description,
+        amount: parseFloat(data.amount),
+        date: data.date,
+        category_id: parseInt(data.category_id),
+        notes: data.notes,
+        currency: data.currency
+      })
+      
+      console.log('API response:', response)
+      
+      // Verify that the expense was created and has an ID
+      if (response && response.id) {
+        // Add a small delay before redirecting to ensure data is saved
+        setTimeout(() => {
+          // Redirect back to expenses list
+          router.push('/expenses')
+        }, 500)
+      } else {
+        console.error('Expense created but invalid response:', response)
+        setError('Expense was created but the server returned an invalid response')
         setLoading(false)
       }
-    } catch (err: any) {
-      console.error('Error creating expense:', err)
-      console.error('Error details:', err.response?.data || err.message)
-      setError(err.response?.data?.detail || 'Failed to create expense')
+    } catch (apiError: any) {
+      console.error('API request error:', apiError)
+      // Log the detailed validation error
+      if (apiError.response?.data?.detail) {
+        console.error('Validation error details:', apiError.response.data.detail)
+      }
+      setError(apiError.response?.data?.detail || 'Failed to create expense. Server error.')
       setLoading(false)
     }
   }
