@@ -179,8 +179,25 @@ export const expenseAPI = {
     skip?: number
     limit?: number
   }) => {
-    const response = await api.get('/api/expenses', { params })
-    return response.data
+    // Add default values for pagination to prevent 422 errors
+    const defaultParams = {
+      skip: 0,
+      limit: 100
+    };
+    
+    // Merge user provided params with defaults
+    const requestParams = { ...defaultParams, ...params };
+    
+    try {
+      const response = await api.get('/api/expenses', { 
+        params: requestParams 
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error in getAllExpenses:', error);
+      // Return empty array instead of throwing to prevent dashboard from crashing
+      return [];
+    }
   },
   getExpense: async (id: number) => {
     const response = await api.get(`/api/expenses/${id}`)

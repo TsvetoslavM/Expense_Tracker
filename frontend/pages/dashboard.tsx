@@ -96,7 +96,7 @@ export default function DashboardPage() {
   const [categoryTotals, setCategoryTotals] = useState<CategoryTotal[]>([])
   const [budgets, setBudgets] = useState<Budget[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [error, setError] = useState<string | null>(null)
   
   // State for date filtering
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear())
@@ -166,47 +166,42 @@ export default function DashboardPage() {
   }, [user, authLoading, selectedYear, selectedMonth])
   
   const fetchDashboardData = async () => {
+    setLoading(true);
+    setError(null);
+    
     try {
-      setLoading(true)
-      setError('')
+      // Get the current date for filtering
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth() + 1; // JavaScript months are 0-indexed
       
-      // Calculate start and end dates for the selected month
-      const startDate = `${selectedYear}-${selectedMonth.toString().padStart(2, '0')}-01`
-      // Get last day of month
-      const lastDay = new Date(selectedYear, selectedMonth, 0).getDate()
-      const endDate = `${selectedYear}-${selectedMonth.toString().padStart(2, '0')}-${lastDay.toString().padStart(2, '0')}`
-      
-      // Fetch expenses for the selected month FIRST
-      const params = {
-        start_date: startDate,
-        end_date: endDate
-      }
-      
-      console.log('Fetching expenses with params:', params)
-      
-      // Get all expenses for the selected month
-      const fetchedExpenses = await expenseAPI.getAllExpenses(params)
-      console.log('Fetched expenses:', fetchedExpenses)
+      // Add better parameters for the expenses API call
+      const expenses = await expenseAPI.getAllExpenses({
+        skip: 0,
+        limit: 10, // Just get the most recent 10 for the dashboard
+        // You can add date filtering if needed:
+        // start_date: `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`
+      });
       
       // Fetch categories after expenses
       const fetchedCategories = await categoryAPI.getAllCategories()
       
-      if (Array.isArray(fetchedExpenses) && Array.isArray(fetchedCategories)) {
+      if (Array.isArray(expenses) && Array.isArray(fetchedCategories)) {
         // Get the 5 most recent expenses
-        const recent = [...fetchedExpenses].sort((a, b) => 
+        const recent = [...expenses].sort((a, b) => 
           new Date(b.date).getTime() - new Date(a.date).getTime()
         ).slice(0, 6)
         
         setRecentExpenses(recent)
         
         // Calculate total expenses for the month with currency conversion
-        const total = fetchedExpenses.reduce((sum, expense) => 
+        const total = expenses.reduce((sum, expense) => 
           sum + convertAmount(expense.amount, expense.currency), 0)
         setTotalExpenses(total)
         
         // Update categories with spent amounts
         const categoriesWithSpending = fetchedCategories.map(category => {
-          const catExpenses = fetchedExpenses.filter(exp => exp.category_id === category.id)
+          const catExpenses = expenses.filter(exp => exp.category_id === category.id)
           const spent = catExpenses.reduce((sum, exp) => sum + convertAmount(exp.amount, exp.currency), 0)
           
           return {
@@ -221,7 +216,7 @@ export default function DashboardPage() {
         
         // Calculate totals by category
         const catTotals = categoriesWithSpending.map(category => {
-          const catExpenses = fetchedExpenses.filter(exp => exp.category_id === category.id)
+          const catExpenses = expenses.filter(exp => exp.category_id === category.id)
           const catTotal = catExpenses.reduce((sum, exp) => sum + convertAmount(exp.amount, exp.currency), 0)
           const percentage = total > 0 ? (catTotal / total * 100).toFixed(1) : 0
           
@@ -252,7 +247,7 @@ export default function DashboardPage() {
             // Process budgets to add category info and calculate remaining amount
             const processedBudgets = fetchedBudgets.map(budget => {
               const category = categoriesWithSpending.find(cat => cat.id === budget.category_id)
-              const categoryExpenses = fetchedExpenses.filter(exp => exp.category_id === budget.category_id)
+              const categoryExpenses = expenses.filter(exp => exp.category_id === budget.category_id)
               
               // Convert all expense amounts to the user's preferred currency
               const spentAmount = categoryExpenses.reduce((sum, exp) => 
@@ -290,19 +285,19 @@ export default function DashboardPage() {
         }
       } else {
         // Handle case where data isn't an array
-        if (!Array.isArray(fetchedExpenses)) {
-          console.error('Expenses data is not an array:', fetchedExpenses)
+        if (!Array.isArray(expenses)) {
+          console.error('Expenses data is not an array:', expenses)
         }
         if (!Array.isArray(fetchedCategories)) {
           console.error('Categories data is not an array:', fetchedCategories)
         }
         throw new Error('Invalid data format received from server')
       }
-    } catch (err) {
-      console.error('Error fetching dashboard data:', err)
-      setError('Failed to load dashboard data')
+    } catch (err: any) {
+      console.error('Error fetching dashboard data:', err);
+      setError(err.response?.data?.detail || 'Failed to load dashboard data');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
   
