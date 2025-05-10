@@ -1,6 +1,6 @@
 <div align="center">
 
-# 💰 Expense Tracker
+# 💰 Expense Tracker made by Tsvetoslav Makaveev
 
 <img src="https://img.shields.io/badge/version-1.0.0-blue.svg?style=for-the-badge" alt="Version 1.0.0"/>
 <img src="https://img.shields.io/badge/license-MIT-green.svg?style=for-the-badge" alt="License MIT"/>
@@ -137,17 +137,6 @@ cd frontend
 npm install
 npm run dev
 ```
-
-## 📊 Screenshots
-
-<div align="center">
-  <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
-    <img width="45%" alt="Dashboard" src="https://github.com/yourusername/expense-tracker/raw/main/docs/images/dashboard.png">
-    <img width="45%" alt="Expenses" src="https://github.com/yourusername/expense-tracker/raw/main/docs/images/expenses.png">
-    <img width="45%" alt="Categories" src="https://github.com/yourusername/expense-tracker/raw/main/docs/images/categories.png">
-    <img width="45%" alt="Reports" src="https://github.com/yourusername/expense-tracker/raw/main/docs/images/reports.png">
-  </div>
-</div>
 
 ## 🛠️ Technologies
 
