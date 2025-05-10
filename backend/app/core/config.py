@@ -40,7 +40,12 @@ class Settings(BaseSettings):
     USE_SQLITE: bool = False
     
     # CORS settings
-    BACKEND_CORS_ORIGINS: Union[str, List[str]] = ["https://expense-tracker-zwetoslaw-gmailcoms-projects.vercel.app", "http://localhost:3000"]
+    BACKEND_CORS_ORIGINS: Union[str, List[str]] = [
+        "http://localhost:3000",  # Local development
+        "https://expense-tracker-tan-sigma.vercel.app",  # Production Vercel URL
+        "https://expense-tracker-zwetoslaw-gmailcoms-projects.vercel.app",  # Alternative Vercel URL
+        "https://expense-tracker-api-un6a.onrender.com"  # Render API URL
+    ]
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod
@@ -96,7 +101,7 @@ class Settings(BaseSettings):
     MAIL_SSL: bool = False
     
     # Frontend URL for links in emails - use str instead of URL types for compatibility
-    FRONTEND_URL: str = "http://localhost:3000"
+    FRONTEND_URL: str = "https://expense-tracker-tan-sigma.vercel.app"
 
     # Update from Config class to SettingsConfigDict
     model_config = SettingsConfigDict(

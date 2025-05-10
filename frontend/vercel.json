@@ -6,7 +6,12 @@
     }
   ],
   "env": {
-    "NEXT_PUBLIC_API_URL": "https://expense-tracker-api.onrender.com"
+    "NEXT_PUBLIC_API_URL": "https://expense-tracker-api-un6a.onrender.com"
+  },
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_API_URL": "https://expense-tracker-api-un6a.onrender.com"
+    }
   },
   "buildCommand": "npm run build",
   "outputDirectory": ".next",

@@ -18,14 +18,13 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Configure CORS - allow all origins in development
+# Configure CORS - use settings from config
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins in development
-    allow_credentials=False,  # IMPORTANT: Must be False when using allow_origins=["*"]
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
-    expose_headers=["*"],  # Expose all headers
+    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Include all routers
