@@ -92,7 +92,7 @@ const AnnualSummaryChart: React.FC<AnnualSummaryProps> = ({ defaultYear = new Da
         series: [{ name: 'Expenses', data: [] }],
         title: {
           text: `No Monthly Data for ${year}`,
-          align: 'center'
+          align: 'center' as 'center'
         }
       };
     }
@@ -121,7 +121,7 @@ const AnnualSummaryChart: React.FC<AnnualSummaryProps> = ({ defaultYear = new Da
       },
       colors: ['#3b82f6'],
       stroke: {
-        curve: 'smooth',
+        curve: 'smooth' as 'smooth',
         width: 3
       },
       fill: {
@@ -138,7 +138,7 @@ const AnnualSummaryChart: React.FC<AnnualSummaryProps> = ({ defaultYear = new Da
       },
       title: {
         text: `Monthly Expenses for ${year}`,
-        align: 'left',
+        align: 'left' as 'left',
         style: {
           fontSize: '16px',
           fontWeight: 'bold'
@@ -197,7 +197,7 @@ const AnnualSummaryChart: React.FC<AnnualSummaryProps> = ({ defaultYear = new Da
       colors,
       series,
       legend: {
-        position: 'bottom'
+        position: 'bottom' as 'bottom'
       },
       dataLabels: {
         enabled: true,
