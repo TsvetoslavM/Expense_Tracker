@@ -1,0 +1,16 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Testing artifacts
+.coverage
+htmlcov/
+.pytest_cache/
+test.db
+*.csv
+*.pdf
+
+# Temporary files
+temp_*
+tmp_* 

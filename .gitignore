@@ -1,0 +1,72 @@
+# Project-specific files
+old_git_backup/
+
+# Docker
+docker-compose.override.yml
+.docker/
+
+# IDE and Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+.project
+.classpath
+.settings/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.local
+.env.*
+
+# Test files
+test-results/
+coverage/
+
+# Node.js
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+.eggs/
+venv/
+env/
+.venv/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+.nuxt/
+
+# Cache files
+.cache/
+.eslintcache
+.parcel-cache/
+
+# Misc
+.DS_Store
+.directory
+.Trash-*
+$RECYCLE.BIN/
+.Spotlight-V100
+.Trashes
+.nfs*
+._* 
