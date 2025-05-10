@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import { exchangeRates, formatCurrencyAmount } from '@/lib/utils/currencyUtils';
 
 export const useCurrency = () => {
