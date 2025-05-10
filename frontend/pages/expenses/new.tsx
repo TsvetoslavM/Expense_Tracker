@@ -180,13 +180,29 @@ export default function NewExpensePage() {
         setLoading(false)
       }
     } catch (apiError: any) {
-      console.error('API request error:', apiError)
-      // Log the detailed validation error
+      console.error('API request error:', apiError);
+      
+      // Handle validation errors properly
       if (apiError.response?.data?.detail) {
-        console.error('Validation error details:', apiError.response.data.detail)
+        // Log the detailed validation error
+        console.error('Validation error details:', apiError.response.data.detail);
+        
+        // Format validation errors for display
+        if (Array.isArray(apiError.response.data.detail)) {
+          const errorMessages = apiError.response.data.detail.map((err: any) => 
+            err.msg || JSON.stringify(err)
+          ).join(', ');
+          setError(`Validation error: ${errorMessages}`);
+        } else if (typeof apiError.response.data.detail === 'string') {
+          setError(apiError.response.data.detail);
+        } else {
+          setError('Invalid data. Please check your input.');
+        }
+      } else {
+        setError('Failed to create expense. Server error.');
       }
-      setError(apiError.response?.data?.detail || 'Failed to create expense. Server error.')
-      setLoading(false)
+      
+      setLoading(false);
     }
   }
 

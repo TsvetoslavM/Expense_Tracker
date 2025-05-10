@@ -240,27 +240,36 @@ export const expenseAPI = {
       formattedData.category_id = parseInt(formattedData.category_id, 10);
     }
 
-    // Add default currency if missing
-    if (!formattedData.currency) {
-      formattedData.currency = 'USD';
-    }
-
-    // Add empty description if missing
-    if (!formattedData.description) {
-      formattedData.description = '';
+    // Make sure description is not empty
+    if (!formattedData.description || formattedData.description.trim() === '') {
+      formattedData.description = 'Untitled Expense';
     }
 
     try {
       console.log('Sending expense data:', formattedData);
-      const response = await api.post('/api/expenses/', formattedData);
+      
+      // Try with explicit content type
+      const response = await api.post('/api/expenses/', formattedData, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
       return response.data;
     } catch (error: any) {
       console.error('Error creating expense:', error);
-      // Log detailed error information
+      
+      // Provide better error diagnostic information
       if (error.response) {
-        console.error('Response data:', error.response.data);
         console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
+        
+        // Check if this is a validation error
+        if (error.response.status === 422 && error.response.data.detail) {
+          console.error('Validation errors:', error.response.data.detail);
+        }
       }
+      
       throw error;
     }
   },
