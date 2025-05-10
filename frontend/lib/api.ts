@@ -223,14 +223,23 @@ export const expenseAPI = {
     notes?: string
     attachment_url?: string
   }) => {
-    // Ensure date is in proper format
+    // Create a deep copy of the data
     const formattedData = { ...expenseData };
-    if (formattedData.date && !formattedData.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      const date = new Date(formattedData.date);
-      formattedData.date = date.toISOString().split('T')[0];
+    
+    // Format date as ISO string with T separator
+    if (formattedData.date) {
+      // First make sure it's just a date (YYYY-MM-DD)
+      let dateStr = formattedData.date;
+      if (!dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const date = new Date(dateStr);
+        dateStr = date.toISOString().split('T')[0];
+      }
+      
+      // Now add the time component with T separator
+      formattedData.date = `${dateStr}T00:00:00`;
     }
 
-    // Ensure amount is a number (not a string)
+    // Ensure amount is a number
     if (typeof formattedData.amount === 'string') {
       formattedData.amount = parseFloat(formattedData.amount);
     }
@@ -240,34 +249,17 @@ export const expenseAPI = {
       formattedData.category_id = parseInt(formattedData.category_id, 10);
     }
 
-    // Make sure description is not empty
-    if (!formattedData.description || formattedData.description.trim() === '') {
-      formattedData.description = 'Untitled Expense';
-    }
-
+    console.log('Sending formatted expense data:', formattedData);
+    
     try {
-      console.log('Sending expense data:', formattedData);
-      
-      // Try with explicit content type
-      const response = await api.post('/api/expenses/', formattedData, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      
+      const response = await api.post('/api/expenses/', formattedData);
       return response.data;
     } catch (error: any) {
       console.error('Error creating expense:', error);
       
-      // Provide better error diagnostic information
+      // More detailed error info for debugging
       if (error.response) {
-        console.error('Response status:', error.response.status);
         console.error('Response data:', error.response.data);
-        
-        // Check if this is a validation error
-        if (error.response.status === 422 && error.response.data.detail) {
-          console.error('Validation errors:', error.response.data.detail);
-        }
       }
       
       throw error;
