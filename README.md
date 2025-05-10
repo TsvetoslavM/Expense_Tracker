@@ -16,7 +16,7 @@
   <img src="https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite"/>
 </p>
 
-Check out [💰 Can try it 💰](https://expense-tracker-zwetoslaw-gmailcoms-projects.vercel.app).
+Check out [💰 Can try it 💰](https://expense-tracker-zwetoslaw-gmailcoms-projects.vercel.app/login).
 </div>
 
 ## 📋 Features
