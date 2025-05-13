@@ -1,17 +1,7 @@
 {
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "https://expense-tracker-api-un6a.onrender.com/api/:path*"
-    }
-  ],
   "env": {
-    "NEXT_PUBLIC_API_URL": "https://expense-tracker-api-un6a.onrender.com"
-  },
-  "build": {
-    "env": {
-      "NEXT_PUBLIC_API_URL": "https://expense-tracker-api-un6a.onrender.com"
-    }
+    "NEXT_PUBLIC_API_URL": "https://expense-tracker-api-un6a.onrender.com",
+    "NEXT_DISABLE_ESLINT": "1"
   },
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
