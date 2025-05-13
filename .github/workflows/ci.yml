@@ -86,6 +86,9 @@ jobs:
     
     - name: Run tests with pytest
       run: |
+        # Настройка за използване на SQLite
+        echo "USE_SQLITE=True" >> $GITHUB_ENV
+        echo "DATABASE_URL=sqlite:///./test.db" >> $GITHUB_ENV
         pytest --cov=app tests/ --cov-report=xml:coverage.xml --junitxml=pytest-report.xml
     
     - name: Upload coverage report
