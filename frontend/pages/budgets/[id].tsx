@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/router'
-import Link from 'next/link'
-import { useAuth } from '@/context/AuthContext'
-import { budgetAPI, categoryAPI } from '@/lib/api'
-import { useCurrency } from '@/hooks/useCurrency'
+import { useState, useEffect } from 'react';
+
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+
+import { useAuth } from '@/context/AuthContext';
+import { budgetAPI, categoryAPI } from '@/lib/api';
+import { useCurrency } from '@/hooks/useCurrency';
 import { 
   ArrowLeft, 
   SaveIcon, 
@@ -14,11 +16,11 @@ import {
   CheckCircle,
   XCircle,
   Trash2
-} from 'lucide-react'
+} from 'lucide-react';
 
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Define interfaces
 interface Category {
