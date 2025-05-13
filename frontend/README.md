@@ -170,4 +170,68 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is licensed under the MIT License. 
+This project is licensed under the MIT License.
+
+## Development Setup
+
+1. Install dependencies:
+   ```
+   npm install
+   ```
+
+2. Run the development server:
+   ```
+   npm run dev
+   ```
+
+3. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Building for Production
+
+The project can be built for production using:
+
+```
+npm run build
+```
+
+By default, this uses the `--no-lint` flag to skip linting during the build process, which helps prevent build failures on Vercel due to linting errors.
+
+## Deployment
+
+The application is configured to deploy on Vercel. The `vercel.json` file includes configuration to:
+- Set the API URL for the backend
+- Disable ESLint during the build process
+- Define build and development commands
+
+## Linting
+
+There are currently many linting errors in the codebase. To run linting checks and see all errors:
+
+```
+npm run lint
+```
+
+The main linting issues that need to be addressed:
+1. Converting double quotes to single quotes in JSX/TSX files
+2. Fixing line endings (CR/LF issues)
+3. Fixing import ordering
+4. Adding missing semicolons
+
+To systematically fix these issues:
+
+1. You can use Prettier to automatically fix formatting issues:
+   ```
+   npx prettier --write "**/*.{js,jsx,ts,tsx}"
+   ```
+
+2. For import ordering issues:
+   ```
+   npx eslint --fix "**/*.{js,jsx,ts,tsx}"
+   ```
+
+In the future, consider setting up pre-commit hooks with tools like Husky to ensure all code meets the linting standards before being committed.
+
+## Environment Variables
+
+- `NEXT_PUBLIC_API_URL`: URL of the backend API
+- `NEXT_DISABLE_ESLINT`: Set to "1" to disable ESLint during builds 

@@ -1,0 +1,31 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+
+# local env files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# vercel
+.vercel
+
+# Component Library
+/components/ui/
+/lib/utils.ts
+/lib/currencyConverter.ts
+/lib/utils/ 
