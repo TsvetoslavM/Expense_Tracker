@@ -68,6 +68,18 @@ This project is built with a modern, decoupled architecture:
 - **Backend**: FastAPI application with SQLAlchemy, Pydantic, and JWT authentication
 - **Database**: SQLite by default (can be configured to use PostgreSQL)
 
+### Deployment Architecture
+
+The application is deployed on Render.com with a continuous deployment pipeline:
+
+- **Frontend**: Deployed as a Node.js web service on Render
+- **Backend**: Deployed as a Python web service on Render
+- **Database**: SQLite with persistent storage
+- **CI/CD**: GitHub Actions for automated testing, code quality analysis via SonarCloud, and deployment
+
+For a detailed view of the deployment architecture, see [Deployment Diagram](docs/deployment_diagram.md).
+For more information about the CI/CD process, see [CI/CD Process](docs/ci_cd_process.md).
+
 ## 📚 User Stories
 
 ### For Regular Users:
@@ -210,6 +222,21 @@ cd frontend
 npm install
 npm run dev
 ```
+
+### Continuous Integration & Deployment
+
+The project uses GitHub Actions for CI/CD:
+
+1. **Linting**: ESLint, Prettier, Black, isort, and Pylint
+2. **Testing**: Automated testing with pytest and coverage reports
+3. **Code Quality**: SonarCloud for static code analysis
+4. **Deployment**: Automatic deployment to Render on successful builds
+
+### Code Quality Tools
+
+- **Frontend**: ESLint, Prettier
+- **Backend**: Black, isort, Pylint
+- **Analysis**: SonarCloud
 
 ## 🛠️ Technologies
 
