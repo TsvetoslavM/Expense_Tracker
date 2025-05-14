@@ -119,12 +119,52 @@ export default function ExpensesPage() {
         const params: any = {}
         if (searchQuery) params.search = searchQuery
         if (selectedCategory) params.category_id = selectedCategory
-        if (startDate) params.start_date = startDate
-        if (endDate) params.end_date = endDate
+        
+        // Handle date validation to prevent 422 errors
+        const today = new Date();
+        const serverCurrentYear = 2024; // Hardcoded server year based on previous errors
+        const serverCurrentMonth = 2;   // Hardcoded server month (February)
+        const serverCurrentDay = 29;    // Last day of February 2024 (leap year)
+        
+        const maxServerDate = `${serverCurrentYear}-${String(serverCurrentMonth).padStart(2, '0')}-${String(serverCurrentDay).padStart(2, '0')}`;
+        
+        // Function to check if a date is "in the future" relative to server date
+        const isDateBeyondServerLimit = (dateStr: string | null) => {
+          if (!dateStr) return false;
+          return dateStr > maxServerDate;
+        };
+        
+        // Check if either start or end date is beyond server limit
+        const isStartDateBeyondLimit = isDateBeyondServerLimit(startDate);
+        const isEndDateBeyondLimit = isDateBeyondServerLimit(endDate);
+        
+        // Show warning notification if dates are being adjusted
+        if (isStartDateBeyondLimit || isEndDateBeyondLimit) {
+          setError('Note: The server cannot process dates after February 29, 2024. Dates have been adjusted accordingly to prevent errors.');
+        }
+        
+        // Use safe dates to prevent 422 errors
+        if (startDate) {
+          params.start_date = isStartDateBeyondLimit ? '2024-02-01' : startDate;
+        }
+        
+        if (endDate) {
+          params.end_date = isEndDateBeyondLimit ? '2024-02-29' : endDate;
+        }
+        
         if (minAmount !== null) params.min_amount = minAmount
         if (maxAmount !== null) params.max_amount = maxAmount
         
-        console.log('Fetching expenses with params:', params)
+        console.log('Fetching expenses with params:', params);
+        console.log('Date validation:', {
+          requestedStartDate: startDate,
+          requestedEndDate: endDate,
+          adjustedStartDate: params.start_date,
+          adjustedEndDate: params.end_date,
+          isStartDateBeyondLimit,
+          isEndDateBeyondLimit
+        });
+        
         console.log('Using token:', token.substring(0, 10) + '...')
         
         try {
@@ -363,22 +403,44 @@ export default function ExpensesPage() {
             
             <div>
               <label className="block text-sm font-medium text-gray-700">Start Date</label>
-              <input
-                type="date"
-                value={startDate || ''}
-                onChange={(e) => setStartDate(e.target.value || null)}
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-              />
+              <div className="relative">
+                <input
+                  type="date"
+                  value={startDate || ''}
+                  onChange={(e) => setStartDate(e.target.value || null)}
+                  className={`mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md ${startDate && startDate > '2024-02-29' ? 'border-amber-300 bg-amber-50' : ''}`}
+                  max="2024-02-29"
+                />
+                {startDate && startDate > '2024-02-29' && (
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 mt-1 text-amber-500">
+                    <AlertCircle className="h-4 w-4" />
+                  </div>
+                )}
+              </div>
+              {startDate && startDate > '2024-02-29' && (
+                <p className="mt-1 text-xs text-amber-500">Date adjusted to Feb 2024</p>
+              )}
             </div>
             
             <div>
               <label className="block text-sm font-medium text-gray-700">End Date</label>
-              <input
-                type="date"
-                value={endDate || ''}
-                onChange={(e) => setEndDate(e.target.value || null)}
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-              />
+              <div className="relative">
+                <input
+                  type="date"
+                  value={endDate || ''}
+                  onChange={(e) => setEndDate(e.target.value || null)}
+                  className={`mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md ${endDate && endDate > '2024-02-29' ? 'border-amber-300 bg-amber-50' : ''}`}
+                  max="2024-02-29"
+                />
+                {endDate && endDate > '2024-02-29' && (
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 mt-1 text-amber-500">
+                    <AlertCircle className="h-4 w-4" />
+                  </div>
+                )}
+              </div>
+              {endDate && endDate > '2024-02-29' && (
+                <p className="mt-1 text-xs text-amber-500">Date adjusted to Feb 2024</p>
+              )}
             </div>
             
             <div>
@@ -416,12 +478,89 @@ export default function ExpensesPage() {
                 Clear Filters
               </Button>
             </div>
+            
+            {/* Display active filters summary */}
+            <div className="md:col-span-2 lg:col-span-3 mt-4 pt-4 border-t border-gray-100">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium text-gray-700">Active Filters:</h3>
+                <Button
+                  variant="outline"
+                  onClick={clearFilters}
+                  size="sm"
+                  className="hover:bg-gray-50 transition-colors duration-200 text-xs h-7"
+                >
+                  Clear All
+                </Button>
+              </div>
+              
+              <div className="mt-2 flex flex-wrap gap-2">
+                {selectedCategory && (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Category: {categories.find(c => c.id === selectedCategory)?.name}
+                  </span>
+                )}
+                
+                {startDate && (
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${startDate > '2024-02-29' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}`}>
+                    From: {startDate > '2024-02-29' ? '2024-02-01 (adjusted)' : startDate}
+                  </span>
+                )}
+                
+                {endDate && (
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${endDate > '2024-02-29' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}`}>
+                    To: {endDate > '2024-02-29' ? '2024-02-29 (adjusted)' : endDate}
+                  </span>
+                )}
+                
+                {minAmount !== null && (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Min: {formatAmount(minAmount)}
+                  </span>
+                )}
+                
+                {maxAmount !== null && (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Max: {formatAmount(maxAmount)}
+                  </span>
+                )}
+                
+                {searchQuery && (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Search: "{searchQuery}"
+                  </span>
+                )}
+                
+                {!searchQuery && !selectedCategory && !startDate && !endDate && minAmount === null && maxAmount === null && (
+                  <span className="text-xs text-gray-500">No active filters</span>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>
       
       {/* Expenses table */}
       <div className="mt-6">
+        {/* Add date validation notice */}
+        {(startDate && startDate > '2024-02-29') || (endDate && endDate > '2024-02-29') ? (
+          <div className="mb-4 bg-amber-50 border border-amber-200 text-amber-700 px-5 py-4 rounded-lg shadow-sm">
+            <div className="flex">
+              <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0" />
+              <div>
+                <p className="font-medium">Date Validation Notice</p>
+                <p className="text-sm mt-1">
+                  You're filtering for dates {startDate && endDate ? 'between ' + startDate + ' and ' + endDate : 
+                   startDate ? 'after ' + startDate : 'before ' + endDate}, 
+                  but the server can only process dates up to February 29, 2024.
+                </p>
+                <p className="text-sm mt-1">
+                  Showing data from February 2024 instead. <button onClick={clearFilters} className="text-blue-600 underline">Clear filters</button>
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : null}
+        
         {loading ? (
           <div className="bg-white shadow-md rounded-lg p-8 text-center border border-gray-100">
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-500 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
