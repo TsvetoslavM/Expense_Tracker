@@ -634,19 +634,19 @@ export default function ExpensesPage() {
               <div className="mt-2 flex flex-wrap gap-2">
                 {selectedCategory && (
                   <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    Category: {categories.find(c => c.id === selectedCategory)?.name}
+                    Category: {categories.find(c => c.id === selectedCategory)?.name || 'Unknown'}
                   </span>
                 )}
                 
                 {startDate && (
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${startDate > '2024-02-29' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}`}>
-                    From: {startDate > '2024-02-29' ? '2024-02-01 (adjusted)' : startDate}
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    From: {startDate}
                   </span>
                 )}
                 
                 {endDate && (
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${endDate > '2024-02-29' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}`}>
-                    To: {endDate > '2024-02-29' ? '2024-02-29 (adjusted)' : endDate}
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    To: {endDate}
                   </span>
                 )}
                 

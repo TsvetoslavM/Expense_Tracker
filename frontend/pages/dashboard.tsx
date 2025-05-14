@@ -146,12 +146,12 @@ export default function DashboardPage() {
   
   // Function to get the actual current date (not relying solely on client system date)
   const getActualCurrentDate = () => {
-    // Instead of hardcoding February 2024, use the actual client date
+    // Get the actual current date from the client system
     const clientDate = new Date();
     
     return {
-      year: clientDate.getFullYear(), // Use actual year from client system (2025)
-      month: clientDate.getMonth() + 1, // Use actual month from client system (5 for May)
+      year: clientDate.getFullYear(),
+      month: clientDate.getMonth() + 1,
       source: 'client'
     };
   };
@@ -177,13 +177,8 @@ export default function DashboardPage() {
     setSelectedYear(newYear);
   };
   
-  // Update the goToNextMonth function to show a notification
+  // Update the goToNextMonth function to allow future dates
   const goToNextMonth = () => {
-    // Get current date for comparison
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth() + 1;
-    
     // Calculate next month and year
     let newMonth = selectedMonth + 1;
     let newYear = selectedYear;
@@ -193,19 +188,9 @@ export default function DashboardPage() {
       newYear = selectedYear + 1;
     }
     
-    // Only update if not going to a future month
-    if (newYear < currentYear || (newYear === currentYear && newMonth <= currentMonth)) {
-      setSelectedMonth(newMonth);
-      setSelectedYear(newYear);
-    } else {
-      console.log('Cannot navigate to future months');
-      setNotification('Cannot navigate to future months');
-      
-      // Clear notification after 3 seconds
-      setTimeout(() => {
-        setNotification(null);
-      }, 3000);
-    }
+    // Allow navigating to any future month
+    setSelectedMonth(newMonth);
+    setSelectedYear(newYear);
   };
   
   // Get current month name
@@ -292,35 +277,20 @@ export default function DashboardPage() {
         setMonthlyChangePercent(0);
       }
       
-      // Get expenses for the recent activity list (still use the API call for this)
+      // Get expenses for the recent activity list
       try {
         // Calculate first and last day of the selected month
         const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
         const startDate = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`;
         const endDate = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
         
-        // Check if we're requesting data for a date that might cause a 422 error (future date)
-        const now = new Date();
-        const currentServerYear = 2024; // Hard-code 2024 as the server's current year based on previous errors
-        const currentServerMonth = 2; // Hard-code February as the server's current month
-        const isLikelyFutureDate = selectedYear > currentServerYear || 
-          (selectedYear === currentServerYear && selectedMonth > currentServerMonth);
-        
-        // If we're likely requesting future data that will cause a 422, use the last known good date
-        const safeStartDate = isLikelyFutureDate ? '2024-02-01' : startDate;
-        const safeEndDate = isLikelyFutureDate ? '2024-02-29' : endDate;
-        
-        console.log('Fetching expenses with safe dates:', { 
-          requestedDates: { startDate, endDate },
-          safeDates: { safeStartDate, safeEndDate },
-          isLikelyFutureDate
-        });
+        console.log('Fetching expenses with dates:', { startDate, endDate });
         
         const expenses = await expenseAPI.getAllExpenses({
           skip: 0,
           limit: 100,
-          start_date: safeStartDate,
-          end_date: safeEndDate
+          start_date: startDate,
+          end_date: endDate
         });
         
         // Set monthly expenses and recent expenses
@@ -334,11 +304,6 @@ export default function DashboardPage() {
           : [];
         setRecentExpenses(recent);
         
-        // If we had to use safe dates, set a notification
-        if (isLikelyFutureDate) {
-          setNotification(`Showing recent expenses from February 2024 due to date validation. Monthly total is still from ${getMonthName(selectedMonth)} ${selectedYear}.`);
-          setTimeout(() => setNotification(null), 5000);
-        }
       } catch (expError) {
         console.error('Error fetching expenses:', expError);
         setMonthlyExpenses([]);
@@ -486,25 +451,6 @@ export default function DashboardPage() {
     }
   }, [budgets]);
   
-  // Keep the existing useEffect for date validation but update it to use our robust check
-  useEffect(() => {
-    if (systemDateIncorrect) {
-      // If we know the system date is wrong, don't use it for validation
-      return;
-    }
-    
-    // Validate that selected date is not in the future
-    const actualDate = getActualCurrentDate();
-    
-    // If selected date is in the future based on our best estimate of current date
-    if (selectedYear > actualDate.year || 
-        (selectedYear === actualDate.year && selectedMonth > actualDate.month)) {
-      console.log('Selected date is in the future, resetting');
-      setSelectedYear(actualDate.year);
-      setSelectedMonth(actualDate.month);
-    }
-  }, [selectedMonth, selectedYear, systemDateIncorrect]);
-  
   // If auth is loading, show a loading indicator
   if (authLoading) {
     return <div className="flex h-screen items-center justify-center">
@@ -555,7 +501,7 @@ export default function DashboardPage() {
                 size="icon"
                 onClick={goToPreviousMonth}
                 className="h-8 w-8 rounded-full"
-                disabled={false} // Enable navigation
+                disabled={false}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -564,7 +510,7 @@ export default function DashboardPage() {
                 size="sm"
                 onClick={resetToCurrentMonth}
                 className="h-8 px-2 text-xs"
-                disabled={false} // Enable reset button
+                disabled={false}
               >
                 Today
               </Button>
@@ -572,7 +518,7 @@ export default function DashboardPage() {
                 variant="outline" 
                 size="icon"
                 onClick={goToNextMonth}
-                disabled={false} // Enable navigation
+                disabled={false}
                 className="h-8 w-8 rounded-full"
               >
                 <ChevronRight className="h-4 w-4" />
@@ -590,37 +536,16 @@ export default function DashboardPage() {
           </Button>
         </div>
         
-        {/* Update the system date warning banner to show it's intentional for May 2025 */}
-        <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-3 flex items-center text-blue-800">
-          <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0 text-blue-500" />
-          <div>
-            <p className="text-sm font-medium">Data From Multiple Time Periods</p>
-            <p className="text-xs mt-0.5">
-              Your system date is set to {new Date().toLocaleDateString()} (May 2025). 
-              Monthly totals are from the Annual Summary for {getMonthName(selectedMonth)} {selectedYear},
-              but recent transactions are from February 2024 due to API date validation.
-            </p>
-          </div>
-        </div>
-        
         {/* Add indicator when no expenses for selected month */}
         {!loading && monthlyExpenses.length === 0 && (
           <div className="bg-amber-50 border border-amber-200 rounded-md p-3 flex items-center text-amber-800">
             <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0 text-amber-500" />
             <div>
               <p className="text-sm font-medium">
-                {selectedYear > 2024 || (selectedYear === 2024 && selectedMonth > 2) ? (
-                  <>No expenses found for February 2024</>
-                ) : (
-                  <>No expenses found for {getMonthName(selectedMonth)} {selectedYear}</>
-                )}
+                No expenses found for {getMonthName(selectedMonth)} {selectedYear}
               </p>
               <p className="text-xs mt-0.5">
-                {selectedYear > 2024 || (selectedYear === 2024 && selectedMonth > 2) ? (
-                  <>Showing data from February 2024 due to date validation limitations.</>
-                ) : (
-                  <>Add expenses for this month to see your spending statistics.</>
-                )}
+                Add expenses for this month to see your spending statistics.
               </p>
             </div>
             <Button 
@@ -699,15 +624,9 @@ export default function DashboardPage() {
                 <h2 className="text-lg font-semibold flex items-center">
                   <TrendingUp className="h-5 w-5 mr-2 text-blue-500" />
                   Recent Expenses
-                  {selectedYear > 2024 || (selectedYear === 2024 && selectedMonth > 2) ? (
-                    <span className="ml-2 text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded">
-                      February 2024 Data
-                    </span>
-                  ) : (
-                    <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
-                      {getMonthName(selectedMonth)} {selectedYear}
-                    </span>
-                  )}
+                  <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                    {getMonthName(selectedMonth)} {selectedYear}
+                  </span>
                 </h2>
                 <Button 
                   variant="ghost" 
@@ -978,94 +897,94 @@ export default function DashboardPage() {
       {showDebugPanel && (
         <div className="mt-2 p-4 bg-gray-100 rounded-lg border border-gray-300">
           <h3 className="text-lg font-semibold mb-2">Debug Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p><strong>Fixed Issues:</strong></p>
-              <ul className="list-disc pl-5 text-sm">
-                <li>Now using data from Annual Summary API for Monthly Expenses</li>
-                <li>Using actual current system date (May 2025)</li>
-                <li>Added fallback to February 2024 for Recent Expenses to prevent 422 errors</li>
-                <li>Added date indicator labels to differentiate data sources</li>
-                <li>Improved calculation of previous month for year transitions</li>
-                <li>Fixed "No expenses found" message to use selected month</li>
-              </ul>
-
-              <div className="mt-4">
-                <p><strong>Data Sources:</strong></p>
-                <ul className="text-xs space-y-1">
-                  <li><strong>Monthly Expenses:</strong> reportAPI.getAnnualSummary (May 2025)</li>
-                  <li><strong>Recent Expenses List:</strong> expenseAPI.getAllExpenses (Feb 2024)</li>
-                  <li><strong>Categories:</strong> categoryAPI.getAllCategories + Annual Summary</li>
-                  <li><strong>Budgets:</strong> budgetAPI.getAllBudgets</li>
+          <div className="mt-4">
+            <p><strong>Debug Information:</strong></p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p><strong>Fixed Issues:</strong></p>
+                <ul className="list-disc pl-5 text-sm">
+                  <li>Now using data from Annual Summary API for Monthly Expenses</li>
+                  <li>Using actual system date without restrictions</li>
+                  <li>Allowing navigation to any month/year, including future dates</li>
+                  <li>No more date validation limits on the server</li>
+                  <li>Improved calculation of previous month for year transitions</li>
                 </ul>
-              </div>
 
-              <div className="mt-4">
-                <p><strong>Date Handling:</strong></p>
+                <div className="mt-4">
+                  <p><strong>Data Sources:</strong></p>
+                  <ul className="text-xs space-y-1">
+                    <li><strong>Monthly Expenses:</strong> reportAPI.getAnnualSummary ({selectedYear})</li>
+                    <li><strong>Recent Expenses List:</strong> expenseAPI.getAllExpenses ({selectedMonth}/{selectedYear})</li>
+                    <li><strong>Categories:</strong> categoryAPI.getAllCategories + Annual Summary</li>
+                    <li><strong>Budgets:</strong> budgetAPI.getAllBudgets</li>
+                  </ul>
+                </div>
+
+                <div className="mt-4">
+                  <p><strong>Date Handling:</strong></p>
+                  <ul className="text-xs space-y-1">
+                    <li><strong>System Date:</strong> {new Date().toLocaleDateString()} (Used for UI)</li>
+                    <li><strong>Selected Month:</strong> {getMonthName(selectedMonth)} {selectedYear}</li>
+                    <li><strong>Recent Expenses Date:</strong> {getMonthName(selectedMonth)} {selectedYear}</li>
+                  </ul>
+                </div>
+              </div>
+              <div>
+                <p><strong>State Values:</strong></p>
                 <ul className="text-xs space-y-1">
-                  <li><strong>System Date:</strong> May 2025 (Used for UI and Annual Summary)</li>
-                  <li><strong>Server Date Limit:</strong> February 2024 (Server rejects dates after this)</li>
-                  <li><strong>Selected Month:</strong> {getMonthName(selectedMonth)} {selectedYear}</li>
-                  <li><strong>Recent Expenses Date:</strong> February 2024 (Fixed to avoid 422 errors)</li>
+                  <li><strong>Selected Month/Year:</strong> {getMonthName(selectedMonth)} {selectedYear}</li>
+                  <li><strong>Monthly Expenses:</strong> {monthlyExpenses?.length || 0} items</li>
+                  <li><strong>Recent Expenses:</strong> {recentExpenses?.length || 0} items</li>
+                  <li><strong>Categories:</strong> {categories?.length || 0} items</li>
+                  <li><strong>Total Monthly Expenses:</strong> {formatAmount(totalExpenses)}</li>
+                  <li><strong>Previous Month Total:</strong> {formatAmount(previousMonthTotal)}</li>
+                  <li><strong>Environment:</strong> {process.env.NODE_ENV}</li>
+                  <li><strong>API URL:</strong> {process.env.NEXT_PUBLIC_API_URL || '(not set)'}</li>
+                  <li><strong>System Date:</strong> {new Date().toLocaleDateString()}</li>
                 </ul>
               </div>
             </div>
-            <div>
-              <p><strong>State Values:</strong></p>
+          
+            <div className="mt-4">
+              <p><strong>Date Information:</strong></p>
+              <div className="mb-2 bg-green-50 border border-green-200 text-green-700 p-2 rounded-md">
+                <p className="text-xs font-bold">✓ System Date: {new Date().toLocaleDateString()}</p>
+                <p className="text-xs mt-1">Using actual system date ({getMonthName(new Date().getMonth() + 1)} {new Date().getFullYear()}) for API requests.</p>
+                <p className="text-xs mt-1">All data shown is for the selected month: {getMonthName(selectedMonth)} {selectedYear}</p>
+              </div>
               <ul className="text-xs space-y-1">
+                <li><strong>Current System Date:</strong> {new Date().toLocaleDateString()} ({new Date().getFullYear()}-{String(new Date().getMonth() + 1).padStart(2, '0')})</li>
                 <li><strong>Selected Month/Year:</strong> {getMonthName(selectedMonth)} {selectedYear}</li>
-                <li><strong>Monthly Expenses:</strong> {monthlyExpenses?.length || 0} items</li>
-                <li><strong>Recent Expenses:</strong> {recentExpenses?.length || 0} items</li>
-                <li><strong>Categories:</strong> {categories?.length || 0} items</li>
-                <li><strong>Total Monthly Expenses:</strong> {formatAmount(totalExpenses)}</li>
-                <li><strong>Previous Month Total:</strong> {formatAmount(previousMonthTotal)}</li>
-                <li><strong>Environment:</strong> {process.env.NODE_ENV}</li>
-                <li><strong>API URL:</strong> {process.env.NEXT_PUBLIC_API_URL || '(not set)'}</li>
-                <li><strong>System Date:</strong> {new Date().toLocaleDateString()} (May 2025)</li>
+                <li><strong>API Request Date:</strong> {getMonthName(selectedMonth)} {selectedYear} ({selectedYear}-{String(selectedMonth).padStart(2, '0')})</li>
               </ul>
             </div>
-          </div>
           
-          <div className="mt-4">
-            <p><strong>Date Information:</strong></p>
-            <div className="mb-2 bg-green-50 border border-green-200 text-green-700 p-2 rounded-md">
-              <p className="text-xs font-bold">✓ System Date: {new Date().toLocaleDateString()}</p>
-              <p className="text-xs mt-1">Using actual system date ({getMonthName(new Date().getMonth() + 1)} {new Date().getFullYear()}) for API requests.</p>
-              <p className="text-xs mt-1">All data shown is for the selected month: {getMonthName(selectedMonth)} {selectedYear}</p>
-            </div>
-            <ul className="text-xs space-y-1">
-              <li><strong>Current System Date:</strong> {new Date().toLocaleDateString()} ({new Date().getFullYear()}-{String(new Date().getMonth() + 1).padStart(2, '0')})</li>
-              <li><strong>Selected Month/Year:</strong> {getMonthName(selectedMonth)} {selectedYear}</li>
-              <li><strong>API Request Date:</strong> {getMonthName(selectedMonth)} {selectedYear} ({selectedYear}-{String(selectedMonth).padStart(2, '0')})</li>
-            </ul>
-          </div>
-          
-          <div className="mt-4">
-            <p><strong>Server Response Logs:</strong></p>
-            <div className="bg-gray-50 p-2 rounded text-xs font-mono max-h-40 overflow-y-auto">
-              <pre>
+            <div className="mt-4">
+              <p><strong>Server Response Logs:</strong></p>
+              <div className="bg-gray-50 p-2 rounded text-xs font-mono max-h-40 overflow-y-auto">
+                <pre>
 GET /api/reports/summary/annual?year={selectedYear} → 200 OK (Annual Summary Data)
-GET /api/expenses?start_date=2025-05-01&end_date=2025-05-31 → 422 Unprocessable (Future Date Rejected)
-GET /api/expenses?start_date=2024-02-01&end_date=2024-02-29 → 200 OK (Fallback Date Used)
+GET /api/expenses?start_date={selectedYear}-{String(selectedMonth).padStart(2, '0')}-01&end_date={selectedYear}-{String(selectedMonth).padStart(2, '0')}-{new Date(selectedYear, selectedMonth, 0).getDate()} → 200 OK
 GET /api/categories → 200 OK
 GET /api/budgets-list?year={selectedYear}&month={selectedMonth} → 200 OK
-              </pre>
-            </div>
-          </div>
-          
-          <div className="mt-4">
-            <p><strong>Budget Processing:</strong></p>
-            <div className="bg-gray-50 p-2 rounded text-xs font-mono max-h-40 overflow-y-auto">
-              <pre>
-                {JSON.stringify(budgets?.slice(0, 3) || [], null, 2)}
-              </pre>
-            </div>
-            {budgets?.length > 0 && budgets[0]?.year !== new Date().getFullYear() && (
-              <div className="mt-2 text-red-600 text-xs font-medium p-2 bg-red-50 rounded">
-                Warning: Budget data is for {budgets[0]?.month}/{budgets[0]?.year} (not the current month/year).
-                This may indicate a synchronization issue between budgets and expenses.
+                </pre>
               </div>
-            )}
+            </div>
+          
+            <div className="mt-4">
+              <p><strong>Budget Processing:</strong></p>
+              <div className="bg-gray-50 p-2 rounded text-xs font-mono max-h-40 overflow-y-auto">
+                <pre>
+                  {JSON.stringify(budgets?.slice(0, 3) || [], null, 2)}
+                </pre>
+              </div>
+              {budgets?.length > 0 && budgets[0]?.year !== new Date().getFullYear() && (
+                <div className="mt-2 text-red-600 text-xs font-medium p-2 bg-red-50 rounded">
+                  Warning: Budget data is for {budgets[0]?.month}/{budgets[0]?.year} (not the current month/year).
+                  This may indicate a synchronization issue between budgets and expenses.
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
