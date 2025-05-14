@@ -83,6 +83,14 @@ interface Budget {
   status?: 'under' | 'over' | 'warning';
 }
 
+// Define interface for top category
+interface TopCategory {
+  name: string;
+  spent: number;
+  id?: string;
+  color?: string;
+}
+
 // Dashboard component
 export default function DashboardPage() {
   const { user, isLoading: authLoading } = useAuth()
@@ -94,15 +102,38 @@ export default function DashboardPage() {
   const [monthlyExpenses, setMonthlyExpenses] = useState<Expense[]>([])
   const [totalExpenses, setTotalExpenses] = useState(0)
   const [categories, setCategories] = useState<Category[]>([])
-  const [categoryTotals, setCategoryTotals] = useState<CategoryTotal[]>([])
+  const [categoryTotals, setCategoryTotals] = useState<any[]>([])
   const [budgets, setBudgets] = useState<Budget[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [topSpendingCategory, setTopSpendingCategory] = useState<TopCategory>({ name: 'None', spent: 0 })
   
   // State for date filtering
-  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear())
-  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1)
-  const [showDateFilter, setShowDateFilter] = useState(false)
+  const [selectedYear, setSelectedYear] = useState<number>(() => {
+    // Default to current year, never allow future years
+    const currentYear = new Date().getFullYear();
+    return currentYear;
+  });
+  
+  const [selectedMonth, setSelectedMonth] = useState<number>(() => {
+    // Default to current month, never allow future months
+    return new Date().getMonth() + 1;
+  });
+  
+  // Add effect to validate selected date on component mount and when date changes
+  useEffect(() => {
+    // Validate that selected date is not in the future
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    
+    // If selected date is in the future, reset to current date
+    if (selectedYear > currentYear || (selectedYear === currentYear && selectedMonth > currentMonth)) {
+      console.log('Selected date is in the future, resetting to current date');
+      setSelectedYear(currentYear);
+      setSelectedMonth(currentMonth);
+    }
+  }, [selectedMonth, selectedYear]);
   
   // State for month navigation
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -114,39 +145,53 @@ export default function DashboardPage() {
   const [monthlyChange, setMonthlyChange] = useState<number>(0)
   const [monthlyChangePercent, setMonthlyChangePercent] = useState<number>(0)
   
-  // Function to go to previous month
-  const goToPreviousMonth = () => {
-    let newMonth = selectedMonth - 1
-    let newYear = selectedYear
-    
-    if (newMonth < 1) {
-      newMonth = 12
-      newYear = selectedYear - 1
-    }
-    
-    setSelectedMonth(newMonth)
-    setSelectedYear(newYear)
-  }
+  // Add a state for notifications at the top with other states
+  const [notification, setNotification] = useState<string | null>(null);
   
-  // Function to go to next month
+  // Update the month navigation functions to prevent going to future dates
+  const goToPreviousMonth = () => {
+    let newMonth = selectedMonth - 1;
+    let newYear = selectedYear;
+    
+    if (newMonth === 0) {
+      newMonth = 12;
+      newYear = selectedYear - 1;
+    }
+    
+    setSelectedMonth(newMonth);
+    setSelectedYear(newYear);
+  };
+  
+  // Update the goToNextMonth function to show a notification
   const goToNextMonth = () => {
-    let newMonth = selectedMonth + 1
-    let newYear = selectedYear
+    // Get current date for comparison
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
     
-    if (newMonth > 12) {
-      newMonth = 1
-      newYear = selectedYear + 1
+    // Calculate next month and year
+    let newMonth = selectedMonth + 1;
+    let newYear = selectedYear;
+    
+    if (newMonth === 13) {
+      newMonth = 1;
+      newYear = selectedYear + 1;
     }
     
-    // Don't allow navigating to future months
-    const today = new Date()
-    const newDate = new Date(newYear, newMonth - 1, 1)
-    
-    if (newDate <= today) {
-      setSelectedMonth(newMonth)
-      setSelectedYear(newYear)
+    // Only update if not going to a future month
+    if (newYear < currentYear || (newYear === currentYear && newMonth <= currentMonth)) {
+      setSelectedMonth(newMonth);
+      setSelectedYear(newYear);
+    } else {
+      console.log('Cannot navigate to future months');
+      setNotification('Cannot navigate to future months');
+      
+      // Clear notification after 3 seconds
+      setTimeout(() => {
+        setNotification(null);
+      }, 3000);
     }
-  }
+  };
   
   // Get current month name
   const getMonthName = (month: number) => {
@@ -171,6 +216,19 @@ export default function DashboardPage() {
     setError(null);
     
     try {
+      // Validate that we're not requesting data for a future date
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth() + 1;
+      
+      // If selected date is in the future, reset to current date
+      if (selectedYear > currentYear || (selectedYear === currentYear && selectedMonth > currentMonth)) {
+        console.log('Selected date is in the future, resetting to current date');
+        setSelectedYear(currentYear);
+        setSelectedMonth(currentMonth);
+        // Don't return here, we'll let the validation in API handle it
+      }
+      
       // First day of the selected month - ensure we're using proper date format
       // Adding padStart to ensure single digit months and days have leading zeros
       const startDate = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`;
@@ -179,17 +237,22 @@ export default function DashboardPage() {
       const lastDay = new Date(selectedYear, selectedMonth, 0).getDate();
       const endDate = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
       
-      console.log('Fetching expenses with date range:', { startDate, endDate });
+      console.log('Fetching expenses with date range:', { startDate, endDate, env: process.env.NODE_ENV });
       
       // Add date filtering to expenses API call
-      const expenses = await expenseAPI.getAllExpenses({
-        skip: 0,
-        limit: 100, // Increased to get more comprehensive data for the dashboard
-        start_date: startDate,
-        end_date: endDate
-      });
-      
-      console.log('Received expenses:', expenses.length);
+      let expenses = [];
+      try {
+        expenses = await expenseAPI.getAllExpenses({
+          skip: 0,
+          limit: 100,
+          start_date: startDate,
+          end_date: endDate
+        });
+        console.log('Received expenses:', expenses.length);
+      } catch (expError) {
+        console.error('Error fetching expenses:', expError);
+        expenses = [];
+      }
       
       // Store the monthly expenses
       setMonthlyExpenses(expenses);
@@ -211,19 +274,24 @@ export default function DashboardPage() {
       console.log('Fetching previous month expenses:', { prevStartDate, prevEndDate });
       
       // Get previous month expenses
-      const prevMonthExpenses = await expenseAPI.getAllExpenses({
-        skip: 0,
-        limit: 100,
-        start_date: prevStartDate,
-        end_date: prevEndDate
-      });
-      
-      console.log('Received previous month expenses:', prevMonthExpenses.length);
+      let prevMonthExpenses = [];
+      try {
+        prevMonthExpenses = await expenseAPI.getAllExpenses({
+          skip: 0,
+          limit: 100,
+          start_date: prevStartDate,
+          end_date: prevEndDate
+        });
+        console.log('Received previous month expenses:', prevMonthExpenses.length);
+      } catch (prevExpError) {
+        console.error('Error fetching previous month expenses:', prevExpError);
+        prevMonthExpenses = [];
+      }
       
       // Fetch categories after expenses
       const fetchedCategories = await categoryAPI.getAllCategories()
       
-      if (Array.isArray(expenses) && Array.isArray(fetchedCategories)) {
+      if (Array.isArray(fetchedCategories)) {
         // Get the 5 most recent expenses - ensure we handle the case where expenses is empty
         const recent = expenses.length > 0 
           ? [...expenses].sort((a, b) => 
@@ -234,14 +302,15 @@ export default function DashboardPage() {
         setRecentExpenses(recent)
         
         // Calculate total expenses for the current month with currency conversion
-        const total = expenses.reduce((sum, expense) => 
+        const total = expenses.reduce((sum: number, expense: any) => 
           sum + convertAmount(expense.amount, expense.currency), 0);
         setTotalExpenses(total);
         
         // Calculate previous month total for comparison
-        const prevTotal = Array.isArray(prevMonthExpenses) ? 
-          prevMonthExpenses.reduce((sum, expense) => 
-            sum + convertAmount(expense.amount, expense.currency), 0) : 0;
+        const prevTotal = Array.isArray(prevMonthExpenses) && prevMonthExpenses.length > 0
+          ? prevMonthExpenses.reduce((sum: number, expense: any) => 
+              sum + convertAmount(expense.amount, expense.currency), 0) 
+          : 0;
         setPreviousMonthTotal(prevTotal);
         
         // Calculate monthly change for the comparison indicator
@@ -256,90 +325,135 @@ export default function DashboardPage() {
           setMonthlyChangePercent(total > 0 ? 100 : 0);
         }
         
-        const categoriesWithSpending = fetchedCategories.map(category => {
-          const catExpenses = expenses.filter(exp => exp.category_id === category.id)
-          const spent = catExpenses.reduce((sum, exp) => sum + convertAmount(exp.amount, exp.currency), 0)
+        // Now we process the categories to include spending data for this month
+        const categoriesWithSpending = fetchedCategories.map((category: any) => {
+          // Calculate total spending for this category in the selected month
+          const categoryExpenses = expenses.filter((exp: any) => exp.category_id === category.id);
+          const spent = categoryExpenses.reduce((sum: number, exp: any) => 
+            sum + convertAmount(exp.amount, exp.currency), 0);
           
-          return {
-            ...category,
-            spent
-          }
-        })
-        setCategories(categoriesWithSpending)
+          return { ...category, spent };
+        });
         
-        // Cache categories
-        localStorage.setItem('userCategories', JSON.stringify(categoriesWithSpending))
+        // Find the category with the highest spending
+        let topCategory: TopCategory = { name: 'None', spent: 0 };
+        if (categoriesWithSpending.length > 0) {
+          topCategory = categoriesWithSpending.reduce((top: TopCategory, exp: any) => 
+            exp.spent > top.spent ? exp : top, { name: 'None', spent: 0 });
+        }
         
-        // Calculate totals by category
-        const catTotals = categoriesWithSpending.map(category => {
-          const catExpenses = expenses.filter(exp => exp.category_id === category.id)
-          const catTotal = catExpenses.reduce((sum, exp) => sum + convertAmount(exp.amount, exp.currency), 0)
-          const percentage = total > 0 ? (catTotal / total * 100).toFixed(1) : 0
-          
-          return {
-            id: category.id,
-            name: category.name,
-            color: category.color,
-            total: catTotal,
-            percentage: percentage,
-            count: catExpenses.length
-          }
-        }).filter(cat => cat.total > 0)
-        .sort((a, b) => b.total - a.total)
+        setTopSpendingCategory(topCategory);
+        setCategories(categoriesWithSpending);
         
-        setCategoryTotals(catTotals)
+        // Calculate totals by category for charts
+        const catTotals = categoriesWithSpending
+          .map((category: any) => {
+            const catExpenses = expenses.filter((exp: any) => exp.category_id === category.id);
+            const catTotal = catExpenses.reduce((sum: number, exp: any) => 
+              sum + convertAmount(exp.amount, exp.currency), 0);
+            const percentage = total > 0 ? Number((catTotal / total * 100).toFixed(1)) : 0;
+            
+            return {
+              id: category.id,
+              name: category.name,
+              color: category.color,
+              total: catTotal,
+              percentage: percentage,
+              count: catExpenses.length
+            };
+          })
+          .filter((cat: any) => cat.total > 0)
+          .sort((a: any, b: any) => b.total - a.total);
         
-        // Fetch budgets for the selected month
+        setCategoryTotals(catTotals);
+        
+        // Get the budgets and calculate the spending against them
         try {
           const budgetParams = {
             year: selectedYear,
             month: selectedMonth
-          }
+          };
           
-          const fetchedBudgets = await budgetAPI.getAllBudgets(budgetParams)
-          console.log('Fetched budgets:', fetchedBudgets)
+          console.log('Fetching budgets with params:', budgetParams);
+          const budgetsData = await budgetAPI.getAllBudgets(budgetParams);
+          console.log('Received budgets data:', budgetsData);
           
-          if (Array.isArray(fetchedBudgets)) {
-            // Process budgets to add category info and calculate remaining amount
-            const processedBudgets = fetchedBudgets.map(budget => {
-              const category = categoriesWithSpending.find(cat => cat.id === budget.category_id)
-              
-              // Use the filtered expenses for the current month
-              const categoryExpenses = expenses.filter(exp => exp.category_id === budget.category_id)
-              
-              // Convert all expense amounts to the user's preferred currency
-              const spentAmount = categoryExpenses.reduce((sum, exp) => 
-                sum + convertAmount(exp.amount, exp.currency), 0)
-              
-              // Convert budget amount to preferred currency if it's in a different currency
-              const budgetAmount = convertAmount(budget.amount, budget.currency)
-              
-              const remaining = budgetAmount - spentAmount
-              const percentage = Math.min(100, Math.max(0, (spentAmount / budgetAmount) * 100))
-              
-              // Determine budget status
-              let status: 'under' | 'over' | 'warning' = 'under'
-              if (spentAmount > budgetAmount) {
-                status = 'over'
-              } else if (spentAmount > budgetAmount * 0.9) {
-                status = 'warning'
+          // Ensure budgets is an array
+          if (Array.isArray(budgetsData)) {
+            const processedBudgets = budgetsData.map((budget: any) => {
+              try {
+                // Find the associated category
+                const category = categoriesWithSpending.find((cat: any) => cat.id === budget.category_id);
+                
+                // Log the current budget for debugging
+                console.log('Processing budget:', { 
+                  id: budget.id, 
+                  category_id: budget.category_id,
+                  has_category_ids: !!budget.category_ids,
+                  amount: budget.amount
+                });
+                
+                // Get expenses for this budget based on category
+                const budgetExpenses = expenses.filter((exp: any) => {
+                  // Safely check if budget has category_ids and if so, use it for filtering
+                  // Otherwise fall back to comparing the budget's category_id with the expense's category_id
+                  return budget.category_ids 
+                    ? Array.isArray(budget.category_ids) && budget.category_ids.includes(exp.category_id)
+                    : budget.category_id === exp.category_id;
+                });
+                
+                // Calculate spent amount for this budget
+                const spent = budgetExpenses.reduce((sum: number, exp: any) => 
+                  sum + convertAmount(exp.amount, exp.currency), 0);
+                
+                // Convert budget amount to preferred currency if needed
+                const budgetAmount = convertAmount(budget.amount, budget.currency);
+                
+                // Calculate remaining amount and percentage
+                const remaining = budgetAmount - spent;
+                const percentage = budgetAmount > 0 
+                  ? Math.min(100, Math.max(0, (spent / budgetAmount) * 100))
+                  : 0;
+                
+                // Determine budget status
+                let status: 'under' | 'over' | 'warning' = 'under';
+                if (spent > budgetAmount) {
+                  status = 'over';
+                } else if (spent > budgetAmount * 0.9) {
+                  status = 'warning';
+                }
+                
+                return {
+                  ...budget,
+                  category,
+                  spent,
+                  remaining,
+                  percentage,
+                  status
+                };
+              } catch (processingError) {
+                // If there's an error processing a specific budget, log it but don't break the whole process
+                console.error('Error processing budget:', processingError, budget);
+                return { 
+                  ...budget, 
+                  spent: 0, 
+                  remaining: budget.amount,
+                  percentage: 0,
+                  status: 'under',
+                  processingError: true
+                };
               }
-              
-              return {
-                ...budget,
-                category,
-                amount: budgetAmount, // Use the converted amount
-                remaining,
-                percentage,
-                status
-              }
-            })
+            });
             
-            setBudgets(processedBudgets)
+            setBudgets(processedBudgets);
+          } else {
+            console.warn('Budgets data is not an array:', budgetsData);
+            setBudgets([]);
           }
         } catch (budgetErr) {
-          console.error('Error fetching budgets:', budgetErr)
+          console.error('Error fetching budgets:', budgetErr);
           // Don't set error state here to prevent blocking UI
+          setBudgets([]);
         }
       } else {
         // Handle case where data isn't an array
@@ -353,8 +467,24 @@ export default function DashboardPage() {
       }
     } catch (err: any) {
       console.error('Error fetching dashboard data:', err);
-      setError(err.response?.data?.detail || 'Failed to load dashboard data');
+      setError(err?.message || 'Error fetching dashboard data. Please try again later.');
+      
+      // Ensure we set loading to false even on error
+      setLoading(false);
+      
+      // Set fallback empty values for all state
+      setMonthlyExpenses([]);
+      setRecentExpenses([]);
+      setCategories([]);
+      setCategoryTotals([]);
+      setBudgets([]);
+      setTotalExpenses(0);
+      setPreviousMonthTotal(0);
+      setMonthlyChange(0);
+      setMonthlyChangePercent(0);
+      setTopSpendingCategory({ name: 'None', spent: 0 });
     } finally {
+      // Always set loading to false when done, regardless of success or failure
       setLoading(false);
     }
   }
@@ -645,62 +775,93 @@ export default function DashboardPage() {
                   .sort((a, b) => (b.spent || 0) - (a.spent || 0))
                   .slice(0, 5)
                   .map((category) => {
-                    const budgetItem = budgets?.find(b => b.category_id === category.id);
-                    const budgetAmount = budgetItem ? convertAmount(budgetItem.amount, budgetItem.currency) : 0;
-                    const spent = category.spent || 0;
-                    const percentage = budgetAmount > 0 
-                      ? Math.min(Math.round((spent / budgetAmount) * 100), 100) 
-                      : 0;
-                    
-                    return (
-                      <div 
-                        key={category.id} 
-                        className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
-                        onClick={() => router.push(`/categories/${category.id}`)}
-                      >
-                        <div className="flex justify-between items-center mb-2">
-                          <div className="flex items-center">
-                            <div 
-                              className="w-3 h-3 rounded-full mr-2"
-                              style={{ backgroundColor: category.color }}
-                            />
-                            <span className="font-medium text-gray-800">
-                              {category.name}
-                            </span>
-                          </div>
-                          <span className="text-gray-700 font-medium">
-                            {formatAmount(spent)}
-                          </span>
-                        </div>
-                        
-                        {budgetAmount > 0 && (
-                          <div>
-                            <div className="flex justify-between text-xs text-gray-500 mb-1">
-                              <span>Budget: {formatAmount(budgetAmount)}</span>
-                              <span 
-                                className={
-                                  percentage >= 100 ? 'text-red-600 font-medium' : 
-                                  percentage >= 85 ? 'text-amber-600 font-medium' : 
-                                  'text-gray-500'
-                                }
-                              >
-                                {percentage}%
+                    try {
+                      // Safely access budgets with null checks
+                      const budgetItem = Array.isArray(budgets) ? 
+                        budgets.find(b => b && b.category_id === category.id) : 
+                        undefined;
+                      
+                      // Safely convert amount with null checks
+                      const budgetAmount = budgetItem && budgetItem.amount && budgetItem.currency ? 
+                        convertAmount(budgetItem.amount, budgetItem.currency) : 
+                        0;
+                      
+                      const spent = category.spent || 0;
+                      const percentage = budgetAmount > 0 
+                        ? Math.min(Math.round((spent / budgetAmount) * 100), 100) 
+                        : 0;
+                      
+                      return (
+                        <div 
+                          key={category.id} 
+                          className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                          onClick={() => router.push(`/categories/${category.id}`)}
+                        >
+                          <div className="flex justify-between items-center mb-2">
+                            <div className="flex items-center">
+                              <div 
+                                className="w-3 h-3 rounded-full mr-2"
+                                style={{ backgroundColor: category.color || '#CCCCCC' }}
+                              />
+                              <span className="font-medium text-gray-800">
+                                {category.name || 'Unknown Category'}
                               </span>
                             </div>
-                            <div className="w-full bg-gray-200 rounded-full h-1.5">
-                              <div 
-                                className={`h-1.5 rounded-full ${
-                                  percentage >= 100 ? 'bg-red-500' : 
-                                  percentage >= 85 ? 'bg-amber-500' : 
-                                  'bg-blue-500'
-                                }`} 
-                                style={{ width: `${percentage}%` }}
-                              />
-                            </div>
+                            <span className="text-gray-700 font-medium">
+                              {formatAmount(spent)}
+                            </span>
                           </div>
-                        )}
-                      </div>
-                    );
+                          
+                          {budgetAmount > 0 && (
+                            <div>
+                              <div className="flex justify-between text-xs text-gray-500 mb-1">
+                                <span>Budget: {formatAmount(budgetAmount)}</span>
+                                <span 
+                                  className={
+                                    percentage >= 100 ? 'text-red-600 font-medium' : 
+                                    percentage >= 85 ? 'text-amber-600 font-medium' : 
+                                    'text-gray-500'
+                                  }
+                                >
+                                  {percentage}%
+                                </span>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                <div 
+                                  className={`h-1.5 rounded-full ${
+                                    percentage >= 100 ? 'bg-red-500' : 
+                                    percentage >= 85 ? 'bg-amber-500' : 
+                                    'bg-blue-500'
+                                  }`} 
+                                  style={{ width: `${percentage}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    } catch (error) {
+                      console.error('Error rendering category:', error, category);
+                      // Provide a fallback UI for the category to avoid breaking the entire list
+                      return (
+                        <div 
+                          key={category.id || 'fallback-key'} 
+                          className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                        >
+                          <div className="flex justify-between items-center mb-2">
+                            <div className="flex items-center">
+                              <div className="w-3 h-3 rounded-full mr-2 bg-gray-400" />
+                              <span className="font-medium text-gray-800">
+                                {category.name || 'Category Error'}
+                              </span>
+                            </div>
+                            <span className="text-gray-700 font-medium">
+                              {formatAmount(category.spent || 0)}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    }
                   })}
               </div>
             )}
@@ -719,20 +880,42 @@ export default function DashboardPage() {
         </div>
       </div>
       
-      {/* Hidden debug info section - only shown when needed */}
+      {/* Debug information section - only visible in development */}
       {process.env.NODE_ENV === 'development' && (
-        <div className="mt-10 p-4 border border-gray-300 rounded-md bg-gray-50">
+        <div className="mt-6 p-4 bg-gray-100 rounded-lg">
           <h3 className="text-lg font-semibold mb-2">Debug Information</h3>
-          <div className="text-xs font-mono">
-            <p>Selected Month: {getMonthName(selectedMonth)} {selectedYear}</p>
-            <p>Monthly Expenses Count: {monthlyExpenses?.length || 0}</p>
-            <p>Recent Expenses Count: {recentExpenses?.length || 0}</p>
-            <p>Categories Count: {categories?.length || 0}</p>
-            <p>Categories with Spending: {categories?.filter(c => (c.spent || 0) > 0).length || 0}</p>
-            <p>Total Monthly Expenses: {formatAmount(totalExpenses || 0)}</p>
-            <p>Previous Month Total: {formatAmount(previousMonthTotal || 0)}</p>
-            <p>Environment: {process.env.NODE_ENV}</p>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p><strong>Fixed Issues:</strong></p>
+              <ul className="list-disc pl-5 text-sm">
+                <li>Prevented requests for future dates that caused 422 errors</li>
+                <li>Added robust error handling for API requests</li>
+                <li>Improved date formatting for API consistency</li>
+                <li>Added validation to prevent navigation to future months</li>
+                <li>Added fallbacks for all calculations when data is missing</li>
+                <li>Fixed "Cannot read properties of undefined (reading 'includes')" error by adding null checks for budget.category_ids</li>
+              </ul>
+            </div>
+            <div>
+              <p><strong>State Values:</strong></p>
+              <ul className="text-xs space-y-1">
+                <li><strong>Selected Month/Year:</strong> {getMonthName(selectedMonth)} {selectedYear}</li>
+                <li><strong>Monthly Expenses:</strong> {monthlyExpenses?.length || 0} items</li>
+                <li><strong>Recent Expenses:</strong> {recentExpenses?.length || 0} items</li>
+                <li><strong>Categories:</strong> {categories?.length || 0} items</li>
+                <li><strong>Total Monthly Expenses:</strong> ${totalExpenses.toFixed(2)}</li>
+                <li><strong>Previous Month Total:</strong> ${previousMonthTotal.toFixed(2)}</li>
+                <li><strong>Environment:</strong> {process.env.NODE_ENV}</li>
+              </ul>
+            </div>
           </div>
+        </div>
+      )}
+      
+      {/* Add the notification display in the JSX right after the main dashboard container div */}
+      {notification && (
+        <div className="fixed top-4 right-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded shadow-md z-50">
+          <p>{notification}</p>
         </div>
       )}
     </PageContainer>
