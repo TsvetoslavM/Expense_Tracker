@@ -155,14 +155,23 @@ export default function DashboardPage() {
     };
   };
   
-  // Now update the reset current month function to use this
+  // Update the reset current month function to use this
   const resetToCurrentMonth = () => {
     const actualDate = getActualCurrentDate();
+    
+    // Explicitly reset category state
+    setCategoryTotals([]);
+    setMonthlyExpenses([]);
+    setTopSpendingCategory({ name: 'None', spent: 0 });
+    
+    // Set loading state
+    setLoading(true);
+    
     setSelectedYear(actualDate.year);
     setSelectedMonth(actualDate.month);
   };
   
-  // Update the month navigation functions to prevent going to future dates
+  // Update the month navigation functions to include direct state reset
   const goToPreviousMonth = () => {
     let newMonth = selectedMonth - 1;
     let newYear = selectedYear;
@@ -171,6 +180,14 @@ export default function DashboardPage() {
       newMonth = 12;
       newYear = selectedYear - 1;
     }
+    
+    // Explicitly reset category state
+    setCategoryTotals([]);
+    setMonthlyExpenses([]);
+    setTopSpendingCategory({ name: 'None', spent: 0 });
+    
+    // Set loading state
+    setLoading(true);
     
     setSelectedMonth(newMonth);
     setSelectedYear(newYear);
@@ -186,6 +203,14 @@ export default function DashboardPage() {
       newMonth = 1;
       newYear = selectedYear + 1;
     }
+    
+    // Explicitly reset category state
+    setCategoryTotals([]);
+    setMonthlyExpenses([]);
+    setTopSpendingCategory({ name: 'None', spent: 0 });
+    
+    // Set loading state
+    setLoading(true);
     
     // Allow navigating to any future month
     setSelectedMonth(newMonth);
@@ -205,8 +230,11 @@ export default function DashboardPage() {
     }
 
     if (user) {
+      // Set loading true when date range changes
+      setLoading(true);
       // Fetch data when user is available or when date range changes
       fetchDashboardData()
+      
     }
   }, [user, authLoading, selectedYear, selectedMonth])
   
@@ -215,6 +243,9 @@ export default function DashboardPage() {
     setError(null);
     
     try {
+      // Debug current state
+      console.log('Fetching dashboard data for:', { year: selectedYear, month: selectedMonth });
+      
       // Get annual summary data for the selected year
       const annualData = await reportAPI.getAnnualSummary(selectedYear);
       console.log('Annual summary data:', annualData);
@@ -227,6 +258,48 @@ export default function DashboardPage() {
       
       // Find monthly data for the selected month
       const monthlyData = annualData.monthly_data.find((item: any) => item.month === selectedMonth);
+      console.log('Monthly data found:', { monthlyData, month: selectedMonth });
+      
+      // Find previous month data - declare at the top level of the function
+      // so it's available to all code blocks below
+      let prevMonthData = null;
+      
+      // Get expense data BEFORE calculating category spending
+      // to ensure it's available for the category calculations
+      let expenses = [];
+      try {
+        // Calculate first and last day of the selected month
+        const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
+        const startDate = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`;
+        const endDate = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
+        
+        console.log('Fetching expenses with dates:', { startDate, endDate });
+        
+        expenses = await expenseAPI.getAllExpenses({
+          skip: 0,
+          limit: 100,
+          start_date: startDate,
+          end_date: endDate
+        });
+        
+        // Set monthly expenses and recent expenses
+        setMonthlyExpenses(expenses || []);
+        console.log(`Found ${expenses?.length || 0} expenses for ${selectedMonth}/${selectedYear}`);
+        
+        // Get the 5 most recent expenses
+        const recent = expenses && expenses.length > 0 
+          ? [...expenses].sort((a, b) => 
+              new Date(b.date).getTime() - new Date(a.date).getTime()
+            ).slice(0, 6)
+          : [];
+        setRecentExpenses(recent);
+        
+      } catch (expError) {
+        console.error('Error fetching expenses:', expError);
+        setMonthlyExpenses([]);
+        setRecentExpenses([]);
+        expenses = [];
+      }
       
       if (monthlyData) {
         // Set the total expenses from the monthly data
@@ -237,12 +310,12 @@ export default function DashboardPage() {
         const prevYear = selectedMonth === 1 ? selectedYear - 1 : selectedYear;
         
         // If we're looking at previous year, we need to fetch that annual data
-        let prevMonthData;
+        let prevYearData;
         
         if (prevMonth === 12 && selectedMonth === 1) {
           // Fetch previous year data
           try {
-            const prevYearData = await reportAPI.getAnnualSummary(prevYear);
+            prevYearData = await reportAPI.getAnnualSummary(prevYear);
             prevMonthData = prevYearData.monthly_data.find((item: any) => item.month === prevMonth);
           } catch (err) {
             console.error('Error fetching previous year data:', err);
@@ -276,50 +349,18 @@ export default function DashboardPage() {
         setMonthlyChangePercent(0);
       }
       
-      // Get expenses for the recent activity list
-      try {
-        // Calculate first and last day of the selected month
-        const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
-        const startDate = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`;
-        const endDate = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
-        
-        console.log('Fetching expenses with dates:', { startDate, endDate });
-        
-        const expenses = await expenseAPI.getAllExpenses({
-          skip: 0,
-          limit: 100,
-          start_date: startDate,
-          end_date: endDate
-        });
-        
-        // Set monthly expenses and recent expenses
-        setMonthlyExpenses(expenses || []);
-        
-        // Get the 5 most recent expenses
-        const recent = expenses && expenses.length > 0 
-          ? [...expenses].sort((a, b) => 
-              new Date(b.date).getTime() - new Date(a.date).getTime()
-            ).slice(0, 6)
-          : [];
-        setRecentExpenses(recent);
-        
-      } catch (expError) {
-        console.error('Error fetching expenses:', expError);
-        setMonthlyExpenses([]);
-        setRecentExpenses([]);
-      }
-      
       // Fetch categories
       const fetchedCategories = await categoryAPI.getAllCategories();
       if (Array.isArray(fetchedCategories)) {
         setCategories(fetchedCategories);
+        console.log(`Processing ${fetchedCategories.length} categories with ${expenses.length} expenses`);
         
-        // Calculate spending per category using both actual expenses and annual data
+        // Process categories with spending data and month-over-month comparisons
         const categoriesWithSpending = fetchedCategories.map((category: Category) => {
           // Get spending data from monthly expenses first (most accurate)
-          const spentFromExpenses = monthlyExpenses
-            .filter(expense => expense.category_id === category.id)
-            .reduce((total, expense) => {
+          const spentFromExpenses = expenses  // Use the expenses variable from above
+            .filter((expense: Expense) => expense.category_id === category.id)
+            .reduce((total: number, expense: Expense) => {
               // Convert expense amount to preferred currency if needed
               const convertedAmount = convertAmount(expense.amount, expense.currency);
               return total + convertedAmount;
@@ -339,11 +380,28 @@ export default function DashboardPage() {
           }
           
           // Use expense data if available, otherwise use annual data
-          const spent = monthlyExpenses.length > 0 ? spentFromExpenses : spentFromAnnualData;
+          const spent = expenses.length > 0 ? spentFromExpenses : spentFromAnnualData;
+          
+          // Log category spending
+          if (spent > 0) {
+            console.log(`Category ${category.name}: spent ${spent}`);
+          }
+          
+          // Get previous month's spending for this category (if available)
+          let previousSpent = 0;
+          if (prevMonthData && prevMonthData.category_breakdown) {
+            const prevCategoryData = prevMonthData.category_breakdown.find((item: any) => 
+              item.category_id === category.id
+            );
+            if (prevCategoryData) {
+              previousSpent = prevCategoryData.amount || 0;
+            }
+          }
           
           return {
             ...category,
-            spent: spent
+            spent,
+            previousMonthTotal: previousSpent
           };
         });
         
@@ -373,11 +431,13 @@ export default function DashboardPage() {
               color: category.color,
               total: category.spent,
               percentage: percentage,
-              count: monthlyExpenses.filter(exp => exp.category_id === category.id).length
+              count: expenses.filter((exp: Expense) => exp.category_id === category.id).length,
+              previousMonthTotal: category.previousMonthTotal
             };
           })
           .sort((a: any, b: any) => b.total - a.total);
         
+        console.log(`Found ${catTotals.length} categories with spending`);
         setCategoryTotals(catTotals);
       } else {
         setCategories([]);
@@ -420,6 +480,7 @@ export default function DashboardPage() {
       setMonthlyChangePercent(0);
       setTopSpendingCategory({ name: 'None', spent: 0 });
     } finally {
+      console.log('Data fetching complete, setting loading to false');
       setLoading(false);
     }
   }
@@ -588,16 +649,20 @@ export default function DashboardPage() {
           description={
             <div className="flex flex-col">
               <div className="flex items-center text-sm">
-                <span className={monthlyChange < 0 ? 'text-green-600' : 'text-red-600'}>
-                  {monthlyChange < 0 ? (
-                    <ArrowDownRight className="inline h-3.5 w-3.5 mr-1" />
+                <span className={monthlyChange < 0 ? 'text-green-600' : monthlyChange > 0 ? 'text-red-600' : 'text-gray-600'}>
+                  {monthlyChange === 0 ? (
+                    'No change'
+                  ) : monthlyChange < 0 ? (
+                    <><ArrowDownRight className="inline h-3.5 w-3.5 mr-1" />{Math.abs(monthlyChangePercent || 0).toFixed(1)}%</>
                   ) : (
-                    <ArrowUpRight className="inline h-3.5 w-3.5 mr-1" />
+                    <><ArrowUpRight className="inline h-3.5 w-3.5 mr-1" />{Math.abs(monthlyChangePercent || 0).toFixed(1)}%</>
                   )}
-                  {Math.abs(monthlyChangePercent || 0).toFixed(1)}% 
                 </span>
-                <span className="text-gray-500 ml-1">vs last month</span>
+                <span className="text-gray-500 ml-1">vs {selectedMonth === 1 ? 'Dec' : getMonthName(selectedMonth - 1).substring(0, 3)}</span>
               </div>
+              {previousMonthTotal === 0 && monthlyChange > 0 && (
+                <span className="text-xs text-gray-500 mt-0.5">No data for previous month</span>
+              )}
             </div>
           }
           icon={<Wallet className="h-4 w-4" />}
@@ -633,10 +698,10 @@ export default function DashboardPage() {
         />
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8" key={`dashboard-content-${selectedYear}-${selectedMonth}`}>
         {/* Recent expenses */}
         <div className="lg:col-span-2">
-          <Card className="overflow-hidden h-[457px]">
+          <Card className="overflow-hidden h-full">
             <div className="p-6 bg-gradient-to-b from-gray-50 to-white border-b">
               <div className="flex justify-between items-center">
                 <h2 className="text-lg font-semibold flex items-center">
@@ -740,9 +805,9 @@ export default function DashboardPage() {
           </Card>
         </div>
         
-        {/* Category spending */}
-        <div>
-          <Card className="overflow-hidden">
+        {/* Category spending - add a key to force rerender on month change */}
+        <div key={`category-spending-${selectedYear}-${selectedMonth}`}>
+          <Card className="overflow-hidden h-full">
             <div className="p-6 bg-gradient-to-b from-gray-50 to-white border-b">
               <div className="flex justify-between items-center">
                 <h2 className="text-lg font-semibold flex items-center">
@@ -861,6 +926,38 @@ export default function DashboardPage() {
                                 }`} 
                                 style={{ width: `${percentage}%` }}
                               />
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Display month-over-month change if available */}
+                        {category.previousMonthTotal !== undefined && (
+                          <div className="mt-2 pt-2 border-t border-gray-100">
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="text-gray-500">vs Previous Month:</span>
+                              {category.previousMonthTotal > 0 ? (
+                                <span className={
+                                  spent > category.previousMonthTotal ? 'text-red-600' : 
+                                  spent < category.previousMonthTotal ? 'text-green-600' : 
+                                  'text-gray-500'
+                                }>
+                                  {spent > category.previousMonthTotal ? (
+                                    <>
+                                      <ArrowUpRight className="inline h-3 w-3 mr-0.5" />
+                                      {Math.abs(((spent - category.previousMonthTotal) / category.previousMonthTotal) * 100).toFixed(0)}%
+                                    </>
+                                  ) : spent < category.previousMonthTotal ? (
+                                    <>
+                                      <ArrowDownRight className="inline h-3 w-3 mr-0.5" />
+                                      {Math.abs(((category.previousMonthTotal - spent) / category.previousMonthTotal) * 100).toFixed(0)}%
+                                    </>
+                                  ) : (
+                                    'No change'
+                                  )}
+                                </span>
+                              ) : (
+                                <span className="text-gray-500">New this month</span>
+                              )}
                             </div>
                           </div>
                         )}
