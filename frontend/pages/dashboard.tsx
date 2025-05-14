@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
-import { expenseAPI, categoryAPI, budgetAPI } from '@/lib/api'
+import { expenseAPI, categoryAPI, budgetAPI, reportAPI } from '@/lib/api'
 import { formatDate } from '@/lib/utils'
 import { useCurrency } from '@/hooks/useCurrency'
 import AnnualSummaryChart from '@/components/reports/AnnualSummaryChart'
@@ -231,91 +231,50 @@ export default function DashboardPage() {
     setError(null);
     
     try {
-      // Use the current selected year and month instead of hardcoding February 2024
-      const apiYear = selectedYear;
-      const apiMonth = selectedMonth;
+      // Get annual summary data for the selected year
+      const annualData = await reportAPI.getAnnualSummary(selectedYear);
+      console.log('Annual summary data:', annualData);
       
-      // Clear any previous notifications about fixed dates
-      setNotification(null);
-      
-      // Calculate first and last day of the selected month
-      const daysInMonth = new Date(apiYear, apiMonth, 0).getDate();
-      const startDate = `${apiYear}-${String(apiMonth).padStart(2, '0')}-01`;
-      const endDate = `${apiYear}-${String(apiMonth).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
-      
-      console.log('Using selected date range for API requests:', { startDate, endDate, env: process.env.NODE_ENV });
-      
-      // Add date filtering to expenses API call using the selected dates
-      let expenses = [];
-      try {
-        expenses = await expenseAPI.getAllExpenses({
-          skip: 0,
-          limit: 100,
-          start_date: startDate,
-          end_date: endDate
-        });
-        console.log('Received expenses:', expenses.length);
-      } catch (expError) {
-        console.error('Error fetching expenses:', expError);
-        expenses = [];
+      if (!annualData || !annualData.monthly_data) {
+        setError('No data available for the selected year');
+        setLoading(false);
+        return;
       }
       
-      // Store the monthly expenses
-      setMonthlyExpenses(expenses);
+      // Find monthly data for the selected month
+      const monthlyData = annualData.monthly_data.find((item: any) => item.month === selectedMonth);
       
-      // For comparison with previous month
-      const prevMonth = apiMonth === 1 ? 12 : apiMonth - 1;
-      const prevYear = apiMonth === 1 ? apiYear - 1 : apiYear;
-      
-      // Calculate first and last day of previous month
-      const prevDaysInMonth = new Date(prevYear, prevMonth, 0).getDate();
-      const prevStartDate = `${prevYear}-${String(prevMonth).padStart(2, '0')}-01`;
-      const prevEndDate = `${prevYear}-${String(prevMonth).padStart(2, '0')}-${String(prevDaysInMonth).padStart(2, '0')}`;
-      
-      console.log('Using date for previous month:', { prevStartDate, prevEndDate });
-      
-      // Get previous month expenses
-      let prevMonthExpenses = [];
-      try {
-        prevMonthExpenses = await expenseAPI.getAllExpenses({
-          skip: 0,
-          limit: 100,
-          start_date: prevStartDate,
-          end_date: prevEndDate
-        });
-        console.log('Received previous month expenses:', prevMonthExpenses.length);
-      } catch (prevExpError) {
-        console.error('Error fetching previous month expenses:', prevExpError);
-        prevMonthExpenses = [];
-      }
-      
-      // Fetch categories after expenses
-      const fetchedCategories = await categoryAPI.getAllCategories()
-      
-      if (Array.isArray(fetchedCategories)) {
-        // Get the 5 most recent expenses - ensure we handle the case where expenses is empty
-        const recent = expenses.length > 0 
-          ? [...expenses].sort((a, b) => 
-              new Date(b.date).getTime() - new Date(a.date).getTime()
-            ).slice(0, 6)
-          : [];
+      if (monthlyData) {
+        // Set the total expenses from the monthly data
+        setTotalExpenses(monthlyData.amount || 0);
         
-        setRecentExpenses(recent)
+        // Find previous month data
+        const prevMonth = selectedMonth === 1 ? 12 : selectedMonth - 1;
+        const prevYear = selectedMonth === 1 ? selectedYear - 1 : selectedYear;
         
-        // Calculate total expenses for the current month with currency conversion
-        const total = expenses.reduce((sum: number, expense: any) => 
-          sum + convertAmount(expense.amount, expense.currency), 0);
-        setTotalExpenses(total);
+        // If we're looking at previous year, we need to fetch that annual data
+        let prevMonthData;
         
-        // Calculate previous month total for comparison
-        const prevTotal = Array.isArray(prevMonthExpenses) && prevMonthExpenses.length > 0
-          ? prevMonthExpenses.reduce((sum: number, expense: any) => 
-              sum + convertAmount(expense.amount, expense.currency), 0) 
-          : 0;
+        if (prevMonth === 12 && selectedMonth === 1) {
+          // Fetch previous year data
+          try {
+            const prevYearData = await reportAPI.getAnnualSummary(prevYear);
+            prevMonthData = prevYearData.monthly_data.find((item: any) => item.month === prevMonth);
+          } catch (err) {
+            console.error('Error fetching previous year data:', err);
+            prevMonthData = null;
+          }
+        } else {
+          // Previous month is in the same year
+          prevMonthData = annualData.monthly_data.find((item: any) => item.month === prevMonth);
+        }
+        
+        // Set previous month total and calculate change
+        const prevTotal = prevMonthData ? prevMonthData.amount : 0;
         setPreviousMonthTotal(prevTotal);
         
         // Calculate monthly change for the comparison indicator
-        const change = total - prevTotal;
+        const change = monthlyData.amount - prevTotal;
         setMonthlyChange(change);
         
         // Calculate percentage change
@@ -323,156 +282,124 @@ export default function DashboardPage() {
           const changePercent = (change / prevTotal) * 100;
           setMonthlyChangePercent(changePercent);
         } else {
-          setMonthlyChangePercent(total > 0 ? 100 : 0);
-        }
-        
-        // Now we process the categories to include spending data for this month
-        const categoriesWithSpending = fetchedCategories.map((category: any) => {
-          // Calculate total spending for this category in the selected month
-          const categoryExpenses = expenses.filter((exp: any) => exp.category_id === category.id);
-          const spent = categoryExpenses.reduce((sum: number, exp: any) => 
-            sum + convertAmount(exp.amount, exp.currency), 0);
-          
-          return { ...category, spent };
-        });
-        
-        // Find the category with the highest spending
-        let topCategory: TopCategory = { name: 'None', spent: 0 };
-        if (categoriesWithSpending.length > 0) {
-          topCategory = categoriesWithSpending.reduce((top: TopCategory, exp: any) => 
-            exp.spent > top.spent ? exp : top, { name: 'None', spent: 0 });
-        }
-        
-        setTopSpendingCategory(topCategory);
-        setCategories(categoriesWithSpending);
-        
-        // Calculate totals by category for charts
-        const catTotals = categoriesWithSpending
-          .map((category: any) => {
-            const catExpenses = expenses.filter((exp: any) => exp.category_id === category.id);
-            const catTotal = catExpenses.reduce((sum: number, exp: any) => 
-              sum + convertAmount(exp.amount, exp.currency), 0);
-            const percentage = total > 0 ? Number((catTotal / total * 100).toFixed(1)) : 0;
-            
-            return {
-              id: category.id,
-              name: category.name,
-              color: category.color,
-              total: catTotal,
-              percentage: percentage,
-              count: catExpenses.length
-            };
-          })
-          .filter((cat: any) => cat.total > 0)
-          .sort((a: any, b: any) => b.total - a.total);
-        
-        setCategoryTotals(catTotals);
-        
-        // Get the budgets and calculate the spending against them
-        try {
-          // Use selected date for budget params instead of February 2024
-          const budgetParams = {
-            year: apiYear,
-            month: apiMonth
-          };
-          
-          console.log('Fetching budgets with params:', budgetParams);
-          const budgetsData = await budgetAPI.getAllBudgets(budgetParams);
-          console.log('Received budgets data:', budgetsData);
-          
-          // Ensure budgets is an array
-          if (Array.isArray(budgetsData)) {
-            const processedBudgets = budgetsData.map((budget: any) => {
-              try {
-                // Find the associated category
-                const category = categoriesWithSpending.find((cat: any) => cat.id === budget.category_id);
-                
-                // Log the current budget for debugging
-                console.log('Processing budget:', { 
-                  id: budget.id, 
-                  category_id: budget.category_id,
-                  has_category_ids: !!budget.category_ids,
-                  amount: budget.amount
-                });
-                
-                // Get expenses for this budget based on category
-                const budgetExpenses = expenses.filter((exp: any) => {
-                  // Safely check if budget has category_ids and if so, use it for filtering
-                  // Otherwise fall back to comparing the budget's category_id with the expense's category_id
-                  return budget.category_ids 
-                    ? Array.isArray(budget.category_ids) && budget.category_ids.includes(exp.category_id)
-                    : budget.category_id === exp.category_id;
-                });
-                
-                // Calculate spent amount for this budget
-                const spent = budgetExpenses.reduce((sum: number, exp: any) => 
-                  sum + convertAmount(exp.amount, exp.currency), 0);
-                
-                // Convert budget amount to preferred currency if needed
-                const budgetAmount = convertAmount(budget.amount, budget.currency);
-                
-                // Calculate remaining amount and percentage
-                const remaining = budgetAmount - spent;
-                const percentage = budgetAmount > 0 
-                  ? Math.min(100, Math.max(0, (spent / budgetAmount) * 100))
-                  : 0;
-                
-                // Determine budget status
-                let status: 'under' | 'over' | 'warning' = 'under';
-                if (spent > budgetAmount) {
-                  status = 'over';
-                } else if (spent > budgetAmount * 0.9) {
-                  status = 'warning';
-                }
-                
-                return {
-                  ...budget,
-                  category,
-                  spent,
-                  remaining,
-                  percentage,
-                  status
-                };
-              } catch (processingError) {
-                // If there's an error processing a specific budget, log it but don't break the whole process
-                console.error('Error processing budget:', processingError, budget);
-                return { 
-                  ...budget, 
-                  spent: 0, 
-                  remaining: budget.amount,
-                  percentage: 0,
-                  status: 'under',
-                  processingError: true
-                };
-              }
-            });
-            
-            setBudgets(processedBudgets);
-          } else {
-            console.warn('Budgets data is not an array:', budgetsData);
-            setBudgets([]);
-          }
-        } catch (budgetErr) {
-          console.error('Error fetching budgets:', budgetErr);
-          // Don't set error state here to prevent blocking UI
-          setBudgets([]);
+          setMonthlyChangePercent(monthlyData.amount > 0 ? 100 : 0);
         }
       } else {
-        // Handle case where data isn't an array
-        if (!Array.isArray(expenses)) {
-          console.error('Expenses data is not an array:', expenses)
-        }
-        if (!Array.isArray(fetchedCategories)) {
-          console.error('Categories data is not an array:', fetchedCategories)
-        }
-        throw new Error('Invalid data format received from server')
+        // No data for selected month
+        setTotalExpenses(0);
+        setPreviousMonthTotal(0);
+        setMonthlyChange(0);
+        setMonthlyChangePercent(0);
       }
+      
+      // Get expenses for the recent activity list (still use the API call for this)
+      try {
+        // Calculate first and last day of the selected month
+        const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
+        const startDate = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`;
+        const endDate = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
+        
+        const expenses = await expenseAPI.getAllExpenses({
+          skip: 0,
+          limit: 100,
+          start_date: startDate,
+          end_date: endDate
+        });
+        
+        // Set monthly expenses and recent expenses
+        setMonthlyExpenses(expenses || []);
+        
+        // Get the 5 most recent expenses
+        const recent = expenses && expenses.length > 0 
+          ? [...expenses].sort((a, b) => 
+              new Date(b.date).getTime() - new Date(a.date).getTime()
+            ).slice(0, 6)
+          : [];
+        setRecentExpenses(recent);
+      } catch (expError) {
+        console.error('Error fetching expenses:', expError);
+        setMonthlyExpenses([]);
+        setRecentExpenses([]);
+      }
+      
+      // Fetch categories
+      const fetchedCategories = await categoryAPI.getAllCategories();
+      if (Array.isArray(fetchedCategories)) {
+        setCategories(fetchedCategories);
+        
+        // Use category data from annual summary if available
+        if (annualData.category_data && annualData.category_data.length > 0) {
+          // Map the annual category data to our format
+          const categoriesWithSpending = fetchedCategories.map((category: any) => {
+            const categoryData = annualData.category_data.find((item: any) => 
+              item.name === category.name
+            );
+            return {
+              ...category,
+              spent: categoryData ? categoryData.amount : 0
+            };
+          });
+          
+          // Find the category with the highest spending
+          const topCategory = categoriesWithSpending.reduce((top: any, current: any) => 
+            current.spent > top.spent ? current : top, 
+            { name: 'None', spent: 0 }
+          );
+          
+          setTopSpendingCategory(topCategory);
+          
+          // Calculate totals by category for charts
+          const catTotals = categoriesWithSpending
+            .filter((cat: any) => cat.spent > 0)
+            .map((category: any) => {
+              const percentage = annualData.total_amount > 0 
+                ? Number((category.spent / annualData.total_amount * 100).toFixed(1)) 
+                : 0;
+              
+              return {
+                id: category.id,
+                name: category.name,
+                color: category.color,
+                total: category.spent,
+                percentage: percentage,
+                count: 0 // We don't have this from annual data
+              };
+            })
+            .sort((a: any, b: any) => b.total - a.total);
+          
+          setCategoryTotals(catTotals);
+        } else {
+          // No category data from annual summary
+          setCategoryTotals([]);
+        }
+      } else {
+        setCategories([]);
+        setCategoryTotals([]);
+      }
+      
+      // Fetch budgets
+      try {
+        const budgetParams = {
+          year: selectedYear,
+          month: selectedMonth
+        };
+        
+        console.log('Fetching budgets with params:', budgetParams);
+        const budgetsData = await budgetAPI.getAllBudgets(budgetParams);
+        
+        if (Array.isArray(budgetsData)) {
+          setBudgets(budgetsData);
+        } else {
+          setBudgets([]);
+        }
+      } catch (budgetErr) {
+        console.error('Error fetching budgets:', budgetErr);
+        setBudgets([]);
+      }
+      
     } catch (err: any) {
       console.error('Error fetching dashboard data:', err);
       setError(err?.message || 'Error fetching dashboard data. Please try again later.');
-      
-      // Ensure we set loading to false even on error
-      setLoading(false);
       
       // Set fallback empty values for all state
       setMonthlyExpenses([]);
@@ -486,7 +413,6 @@ export default function DashboardPage() {
       setMonthlyChangePercent(0);
       setTopSpendingCategory({ name: 'None', spent: 0 });
     } finally {
-      // Always set loading to false when done, regardless of success or failure
       setLoading(false);
     }
   }
@@ -677,16 +603,19 @@ export default function DashboardPage() {
           title="Monthly Expenses" 
           value={formatAmount(totalExpenses || 0)}
           description={
-            <div className="flex items-center text-sm">
-              <span className={monthlyChange < 0 ? 'text-green-600' : 'text-red-600'}>
-                {monthlyChange < 0 ? (
-                  <ArrowDownRight className="inline h-3.5 w-3.5 mr-1" />
-                ) : (
-                  <ArrowUpRight className="inline h-3.5 w-3.5 mr-1" />
-                )}
-                {Math.abs(monthlyChangePercent || 0).toFixed(1)}% 
-              </span>
-              <span className="text-gray-500 ml-1">vs last month</span>
+            <div className="flex flex-col">
+              <div className="flex items-center text-sm">
+                <span className={monthlyChange < 0 ? 'text-green-600' : 'text-red-600'}>
+                  {monthlyChange < 0 ? (
+                    <ArrowDownRight className="inline h-3.5 w-3.5 mr-1" />
+                  ) : (
+                    <ArrowUpRight className="inline h-3.5 w-3.5 mr-1" />
+                  )}
+                  {Math.abs(monthlyChangePercent || 0).toFixed(1)}% 
+                </span>
+                <span className="text-gray-500 ml-1">vs last month</span>
+              </div>
+              <span className="text-xs text-blue-500 mt-1">From Annual Summary</span>
             </div>
           }
           icon={<Wallet className="h-4 w-4" />}
@@ -1005,13 +934,23 @@ export default function DashboardPage() {
             <div>
               <p><strong>Fixed Issues:</strong></p>
               <ul className="list-disc pl-5 text-sm">
-                <li>Now using actual current system date (May 2025)</li>
+                <li>Now using data from Annual Summary API for Monthly Expenses</li>
+                <li>Using actual current system date (May 2025)</li>
                 <li>Enabled month navigation buttons for better user experience</li>
-                <li>Updated date handling to calculate correct days in month</li>
-                <li>Improved formatting of currency values using formatAmount</li>
-                <li>Enhanced previous month calculation logic for year transitions</li>
-                <li>Added validation to prevent API errors with future dates</li>
+                <li>Improved calculation of previous month for year transitions</li>
+                <li>Updated category data to match annual summary</li>
+                <li>Fixed "No expenses found" message to use selected month</li>
               </ul>
+
+              <div className="mt-4">
+                <p><strong>Data Sources:</strong></p>
+                <ul className="text-xs space-y-1">
+                  <li><strong>Monthly Expenses:</strong> reportAPI.getAnnualSummary</li>
+                  <li><strong>Recent Expenses List:</strong> expenseAPI.getAllExpenses</li>
+                  <li><strong>Categories:</strong> categoryAPI.getAllCategories + Annual Summary</li>
+                  <li><strong>Budgets:</strong> budgetAPI.getAllBudgets</li>
+                </ul>
+              </div>
             </div>
             <div>
               <p><strong>State Values:</strong></p>
@@ -1047,7 +986,10 @@ export default function DashboardPage() {
             <p><strong>Server Response Logs:</strong></p>
             <div className="bg-gray-50 p-2 rounded text-xs font-mono max-h-40 overflow-y-auto">
               <pre>
-GET /api/expenses?start_date={selectedYear}-{String(selectedMonth).padStart(2, '0')}-01&end_date={selectedYear}-{String(selectedMonth).padStart(2, '0')}-{String(new Date(selectedYear, selectedMonth, 0).getDate()).padStart(2, '0')} → 200 OK
+GET /api/reports/summary/annual?year={selectedYear} → 200 OK (Annual Summary Data)
+GET /api/expenses?start_date={selectedYear}-{String(selectedMonth).padStart(2, '0')}-01&end_date={selectedYear}-{String(selectedMonth).padStart(2, '0')}-{String(new Date(selectedYear, selectedMonth, 0).getDate()).padStart(2, '0')} → 200 OK (Recent Expenses)
+GET /api/categories → 200 OK
+GET /api/budgets-list?year={selectedYear}&month={selectedMonth} → 200 OK
               </pre>
             </div>
           </div>
