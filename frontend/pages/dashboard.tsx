@@ -178,9 +178,24 @@ export default function DashboardPage() {
       // Add better parameters for the expenses API call
       const expenses = await expenseAPI.getAllExpenses({
         skip: 0,
-        limit: 10, // Just get the most recent 10 for the dashboard
-        // You can add date filtering if needed:
-        // start_date: `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`
+        limit: 100, // Increase limit to ensure we get all expenses for the month
+        start_date: `${selectedYear}-${selectedMonth.toString().padStart(2, '0')}-01`,
+        end_date: selectedMonth === 12 
+          ? `${selectedYear + 1}-01-01` 
+          : `${selectedYear}-${(selectedMonth + 1).toString().padStart(2, '0')}-01`
+      });
+      
+      // Also get expenses from previous month for comparison
+      const previousMonth = selectedMonth === 1 ? 12 : selectedMonth - 1;
+      const previousYear = selectedMonth === 1 ? selectedYear - 1 : selectedYear;
+      
+      const previousMonthExpenses = await expenseAPI.getAllExpenses({
+        skip: 0,
+        limit: 100,
+        start_date: `${previousYear}-${previousMonth.toString().padStart(2, '0')}-01`,
+        end_date: previousMonth === 12 
+          ? `${previousYear + 1}-01-01` 
+          : `${previousYear}-${(previousMonth + 1).toString().padStart(2, '0')}-01`
       });
       
       // Fetch categories after expenses
@@ -194,10 +209,25 @@ export default function DashboardPage() {
         
         setRecentExpenses(recent)
         
-        // Calculate total expenses for the month with currency conversion
+        // Calculate total expenses for the current month with currency conversion
         const total = expenses.reduce((sum, expense) => 
-          sum + convertAmount(expense.amount, expense.currency), 0)
-        setTotalExpenses(total)
+          sum + convertAmount(expense.amount, expense.currency), 0);
+        setTotalExpenses(total);
+        
+        // Calculate previous month's total for comparison
+        const prevTotal = previousMonthExpenses.reduce((sum: number, expense: Expense) => 
+          sum + convertAmount(expense.amount, expense.currency), 0);
+        setPreviousMonthTotal(prevTotal);
+        
+        // Calculate month-over-month change
+        const change = total - prevTotal;
+        setMonthlyChange(change);
+        
+        // Calculate percentage change
+        const percentChange = prevTotal > 0 
+          ? (change / prevTotal) * 100 
+          : 0;
+        setMonthlyChangePercent(percentChange);
         
         // Update categories with spent amounts
         const categoriesWithSpending = fetchedCategories.map(category => {
