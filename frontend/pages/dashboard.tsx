@@ -91,6 +91,7 @@ export default function DashboardPage() {
   
   // State for expenses data
   const [recentExpenses, setRecentExpenses] = useState<Expense[]>([])
+  const [monthlyExpenses, setMonthlyExpenses] = useState<Expense[]>([])
   const [totalExpenses, setTotalExpenses] = useState(0)
   const [categories, setCategories] = useState<Category[]>([])
   const [categoryTotals, setCategoryTotals] = useState<CategoryTotal[]>([])
@@ -170,17 +171,44 @@ export default function DashboardPage() {
     setError(null);
     
     try {
-      // Get the current date for filtering
-      const now = new Date();
-      const currentYear = now.getFullYear();
-      const currentMonth = now.getMonth() + 1; // JavaScript months are 0-indexed
+      // First day of the selected month
+      const startDate = `${selectedYear}-${selectedMonth.toString().padStart(2, '0')}-01`;
       
-      // Add better parameters for the expenses API call
+      // Calculate the last day of the selected month
+      const lastDay = new Date(selectedYear, selectedMonth, 0).getDate();
+      const endDate = `${selectedYear}-${selectedMonth.toString().padStart(2, '0')}-${lastDay}`;
+      
+      // Add date filtering to expenses API call
       const expenses = await expenseAPI.getAllExpenses({
         skip: 0,
-        limit: 10, // Just get the most recent 10 for the dashboard
-        // You can add date filtering if needed:
-        // start_date: `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`
+        limit: 100, // Increased to get more comprehensive data for the dashboard
+        start_date: startDate,
+        end_date: endDate
+      });
+      
+      // Store the monthly expenses
+      setMonthlyExpenses(expenses);
+      
+      // For comparison with previous month
+      // Calculate the previous month
+      let prevMonth = selectedMonth - 1;
+      let prevYear = selectedYear;
+      if (prevMonth === 0) {
+        prevMonth = 12;
+        prevYear = selectedYear - 1;
+      }
+      
+      // First and last day of previous month
+      const prevStartDate = `${prevYear}-${prevMonth.toString().padStart(2, '0')}-01`;
+      const prevLastDay = new Date(prevYear, prevMonth, 0).getDate();
+      const prevEndDate = `${prevYear}-${prevMonth.toString().padStart(2, '0')}-${prevLastDay}`;
+      
+      // Get previous month expenses
+      const prevMonthExpenses = await expenseAPI.getAllExpenses({
+        skip: 0,
+        limit: 100,
+        start_date: prevStartDate,
+        end_date: prevEndDate
       });
       
       // Fetch categories after expenses
@@ -194,14 +222,32 @@ export default function DashboardPage() {
         
         setRecentExpenses(recent)
         
-        // Calculate total expenses for the month with currency conversion
+        // Calculate total expenses for the current month with currency conversion
         const total = expenses.reduce((sum, expense) => 
           sum + convertAmount(expense.amount, expense.currency), 0)
         setTotalExpenses(total)
         
-        // Update categories with spent amounts
+        // Calculate previous month total for comparison
+        const prevTotal = Array.isArray(prevMonthExpenses) ? 
+          prevMonthExpenses.reduce((sum, expense) => 
+            sum + convertAmount(expense.amount, expense.currency), 0) : 0;
+        setPreviousMonthTotal(prevTotal);
+        
+        // Calculate monthly change for the comparison indicator
+        const change = total - prevTotal;
+        setMonthlyChange(change);
+        
+        // Calculate percentage change
+        if (prevTotal > 0) {
+          const changePercent = (change / prevTotal) * 100;
+          setMonthlyChangePercent(changePercent);
+        } else {
+          setMonthlyChangePercent(total > 0 ? 100 : 0);
+        }
+        
+        // Update categories with spent amounts for the current month
         const categoriesWithSpending = fetchedCategories.map(category => {
-          const catExpenses = expenses.filter(exp => exp.category_id === category.id)
+          const catExpenses = monthlyExpenses.filter(exp => exp.category_id === category.id)
           const spent = catExpenses.reduce((sum, exp) => sum + convertAmount(exp.amount, exp.currency), 0)
           
           return {
@@ -216,7 +262,7 @@ export default function DashboardPage() {
         
         // Calculate totals by category
         const catTotals = categoriesWithSpending.map(category => {
-          const catExpenses = expenses.filter(exp => exp.category_id === category.id)
+          const catExpenses = monthlyExpenses.filter(exp => exp.category_id === category.id)
           const catTotal = catExpenses.reduce((sum, exp) => sum + convertAmount(exp.amount, exp.currency), 0)
           const percentage = total > 0 ? (catTotal / total * 100).toFixed(1) : 0
           
@@ -247,7 +293,9 @@ export default function DashboardPage() {
             // Process budgets to add category info and calculate remaining amount
             const processedBudgets = fetchedBudgets.map(budget => {
               const category = categoriesWithSpending.find(cat => cat.id === budget.category_id)
-              const categoryExpenses = expenses.filter(exp => exp.category_id === budget.category_id)
+              
+              // Use the monthlyExpenses for the selected month instead of all expenses
+              const categoryExpenses = monthlyExpenses.filter(exp => exp.category_id === budget.category_id)
               
               // Convert all expense amounts to the user's preferred currency
               const spentAmount = categoryExpenses.reduce((sum, exp) => 
@@ -420,7 +468,7 @@ export default function DashboardPage() {
         
         <StatCard 
           title="Recent Activity" 
-          value={recentExpenses.length}
+          value={monthlyExpenses.length}
           description="New transactions this month"
           icon={<Clock className="h-4 w-4" />}
           loading={loading}
@@ -646,7 +694,7 @@ export default function DashboardPage() {
                 
                 {categories.filter(cat => cat.spent && cat.spent > 0).length === 0 && !loading && (
                   <div className="p-6 text-center text-gray-500">
-                    No spending recorded for this month yet.
+                    No spending recorded for {getMonthName(selectedMonth)} {selectedYear} yet.
                   </div>
                 )}
               </div>
