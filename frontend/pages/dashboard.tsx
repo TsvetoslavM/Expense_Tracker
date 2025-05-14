@@ -148,6 +148,9 @@ export default function DashboardPage() {
   // Add a state for notifications at the top with other states
   const [notification, setNotification] = useState<string | null>(null);
   
+  // Add state for debug panel visibility near the other state variables
+  const [showDebugPanel, setShowDebugPanel] = useState(false);
+  
   // Update the month navigation functions to prevent going to future dates
   const goToPreviousMonth = () => {
     let newMonth = selectedMonth - 1;
@@ -880,11 +883,22 @@ export default function DashboardPage() {
         </div>
       </div>
       
-      {/* Debug information section - only visible in development */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="mt-6 p-4 bg-gray-100 rounded-lg">
+      {/* Debug Information section - toggle for both development and production */}
+      <div className="mt-6 flex justify-end">
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => setShowDebugPanel(!showDebugPanel)}
+          className="text-sm"
+        >
+          {showDebugPanel ? "Hide Debug Info" : "Show Debug Info"}
+        </Button>
+      </div>
+      
+      {showDebugPanel && (
+        <div className="mt-2 p-4 bg-gray-100 rounded-lg border border-gray-300">
           <h3 className="text-lg font-semibold mb-2">Debug Information</h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <p><strong>Fixed Issues:</strong></p>
               <ul className="list-disc pl-5 text-sm">
@@ -906,7 +920,17 @@ export default function DashboardPage() {
                 <li><strong>Total Monthly Expenses:</strong> ${totalExpenses.toFixed(2)}</li>
                 <li><strong>Previous Month Total:</strong> ${previousMonthTotal.toFixed(2)}</li>
                 <li><strong>Environment:</strong> {process.env.NODE_ENV}</li>
+                <li><strong>API URL:</strong> {process.env.NEXT_PUBLIC_API_URL || '(not set)'}</li>
               </ul>
+            </div>
+          </div>
+          
+          <div className="mt-4">
+            <p><strong>Budget Processing:</strong></p>
+            <div className="bg-gray-50 p-2 rounded text-xs font-mono max-h-40 overflow-y-auto">
+              <pre>
+                {JSON.stringify(budgets?.slice(0, 3) || [], null, 2)}
+              </pre>
             </div>
           </div>
         </div>
