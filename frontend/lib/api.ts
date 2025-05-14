@@ -188,13 +188,17 @@ export const expenseAPI = {
       if (formattedParams?.start_date) {
         // Ensure it's in YYYY-MM-DDT00:00:00 format for FastAPI's datetime parsing
         const startDate = new Date(formattedParams.start_date);
+        // Use time 00:00:00 (start of day) for start_date
         formattedParams.start_date = startDate.toISOString().split('T')[0] + 'T00:00:00';
+        console.log(`Formatted start_date: ${formattedParams.start_date}`);
       }
       
       if (formattedParams?.end_date) {
         // For end date, set it to the end of the day (23:59:59)
         const endDate = new Date(formattedParams.end_date);
+        // Use time 23:59:59 (end of day) for end_date
         formattedParams.end_date = endDate.toISOString().split('T')[0] + 'T23:59:59';
+        console.log(`Formatted end_date: ${formattedParams.end_date}`);
       }
       
       console.log(`Fetching expenses with formatted params:`, formattedParams);
@@ -216,6 +220,9 @@ export const expenseAPI = {
     } catch (error: any) {
       console.error('Error in getAllExpenses:', error);
       
+      // Get the original params for logging
+      const originalParams = params || {};
+      
       // Provide more detailed diagnostics for production environment
       if (process.env.NODE_ENV === 'production') {
         console.error('Production error details:', {
@@ -232,6 +239,17 @@ export const expenseAPI = {
             data: error.response.data
           } : 'No response'
         });
+        
+        // Specific logging for 422 errors which are likely date format issues
+        if (error.response?.status === 422) {
+          console.error('Date format error details:', {
+            error: error.response?.data,
+            requestedDates: {
+              start_date: originalParams.start_date,
+              end_date: originalParams.end_date
+            }
+          });
+        }
       }
       
       // Return empty array instead of throwing to avoid breaking the UI

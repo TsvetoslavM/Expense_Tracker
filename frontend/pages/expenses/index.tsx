@@ -120,36 +120,23 @@ export default function ExpensesPage() {
         if (searchQuery) params.search = searchQuery
         if (selectedCategory) params.category_id = selectedCategory
         
-        // Handle date validation to prevent 422 errors
-        const today = new Date();
-        const serverCurrentYear = 2024; // Hardcoded server year based on previous errors
-        const serverCurrentMonth = 2;   // Hardcoded server month (February)
-        const serverCurrentDay = 29;    // Last day of February 2024 (leap year)
-        
-        const maxServerDate = `${serverCurrentYear}-${String(serverCurrentMonth).padStart(2, '0')}-${String(serverCurrentDay).padStart(2, '0')}`;
-        
-        // Function to check if a date is "in the future" relative to server date
-        const isDateBeyondServerLimit = (dateStr: string | null) => {
-          if (!dateStr) return false;
-          return dateStr > maxServerDate;
-        };
-        
-        // Check if either start or end date is beyond server limit
-        const isStartDateBeyondLimit = isDateBeyondServerLimit(startDate);
-        const isEndDateBeyondLimit = isDateBeyondServerLimit(endDate);
-        
-        // Show warning notification if dates are being adjusted
-        if (isStartDateBeyondLimit || isEndDateBeyondLimit) {
-          setError('Note: The server cannot process dates after February 29, 2024. Dates have been adjusted accordingly to prevent errors.');
-        }
-        
-        // Use safe dates to prevent 422 errors
+        // Date handling - validate and use the actual dates
         if (startDate) {
-          params.start_date = isStartDateBeyondLimit ? '2024-02-01' : startDate;
+          if (isValidDateFormat(startDate)) {
+            params.start_date = startDate;
+          } else {
+            console.warn(`Invalid start date format: ${startDate}`);
+            setError(`Invalid start date format. Please use YYYY-MM-DD format.`);
+          }
         }
         
         if (endDate) {
-          params.end_date = isEndDateBeyondLimit ? '2024-02-29' : endDate;
+          if (isValidDateFormat(endDate)) {
+            params.end_date = endDate;
+          } else {
+            console.warn(`Invalid end date format: ${endDate}`);
+            setError(`Invalid end date format. Please use YYYY-MM-DD format.`);
+          }
         }
         
         if (minAmount !== null) params.min_amount = minAmount
@@ -157,12 +144,8 @@ export default function ExpensesPage() {
         
         console.log('Fetching expenses with params:', params);
         console.log('Date validation:', {
-          requestedStartDate: startDate,
-          requestedEndDate: endDate,
-          adjustedStartDate: params.start_date,
-          adjustedEndDate: params.end_date,
-          isStartDateBeyondLimit,
-          isEndDateBeyondLimit,
+          startDate,
+          endDate,
           searchQuery
         });
         
@@ -208,7 +191,7 @@ export default function ExpensesPage() {
           
           // Set more user-friendly error message based on the status code
           if (apiError.response?.status === 422) {
-            setError('There was a problem with the date format. Please try adjusting your date filters.')
+            setError('There was a problem with the date format. Please ensure your dates are valid.')
             
             // Try again without the date parameters if they're causing issues
             try {
@@ -317,6 +300,19 @@ export default function ExpensesPage() {
     } finally {
       setLoading(false);
     }
+  };
+  
+  // Utility function to check if a date string is valid
+  const isValidDateFormat = (dateString: string | null): boolean => {
+    if (!dateString) return true; // null is considered valid (no filter)
+    
+    // Check if it matches YYYY-MM-DD format
+    const regex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!regex.test(dateString)) return false;
+    
+    // Check if it's a valid date
+    const date = new Date(dateString);
+    return !isNaN(date.getTime());
   };
   
   const clearFilters = () => {
@@ -471,18 +467,25 @@ export default function ExpensesPage() {
                 <input
                   type="date"
                   value={startDate || ''}
-                  onChange={(e) => setStartDate(e.target.value || null)}
-                  className={`mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md ${startDate && startDate > '2024-02-29' ? 'border-amber-300 bg-amber-50' : ''}`}
-                  max="2024-02-29"
+                  onChange={(e) => {
+                    const dateVal = e.target.value;
+                    if (!dateVal || isValidDateFormat(dateVal)) {
+                      setStartDate(dateVal || null);
+                    } else {
+                      // Invalid date - don't update state but show a warning
+                      console.warn(`Invalid date input: ${dateVal}`);
+                    }
+                  }}
+                  className={`mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md ${!startDate || isValidDateFormat(startDate) ? '' : 'border-red-300 bg-red-50'}`}
                 />
-                {startDate && startDate > '2024-02-29' && (
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 mt-1 text-amber-500">
+                {startDate && !isValidDateFormat(startDate) && (
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 mt-1 text-red-500">
                     <AlertCircle className="h-4 w-4" />
                   </div>
                 )}
               </div>
-              {startDate && startDate > '2024-02-29' && (
-                <p className="mt-1 text-xs text-amber-500">Date adjusted to Feb 2024</p>
+              {startDate && !isValidDateFormat(startDate) && (
+                <p className="mt-1 text-xs text-red-500">Invalid date format. Use YYYY-MM-DD</p>
               )}
             </div>
             
@@ -492,18 +495,25 @@ export default function ExpensesPage() {
                 <input
                   type="date"
                   value={endDate || ''}
-                  onChange={(e) => setEndDate(e.target.value || null)}
-                  className={`mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md ${endDate && endDate > '2024-02-29' ? 'border-amber-300 bg-amber-50' : ''}`}
-                  max="2024-02-29"
+                  onChange={(e) => {
+                    const dateVal = e.target.value;
+                    if (!dateVal || isValidDateFormat(dateVal)) {
+                      setEndDate(dateVal || null);
+                    } else {
+                      // Invalid date - don't update state but show a warning
+                      console.warn(`Invalid date input: ${dateVal}`);
+                    }
+                  }}
+                  className={`mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md ${!endDate || isValidDateFormat(endDate) ? '' : 'border-red-300 bg-red-50'}`}
                 />
-                {endDate && endDate > '2024-02-29' && (
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 mt-1 text-amber-500">
+                {endDate && !isValidDateFormat(endDate) && (
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 mt-1 text-red-500">
                     <AlertCircle className="h-4 w-4" />
                   </div>
                 )}
               </div>
-              {endDate && endDate > '2024-02-29' && (
-                <p className="mt-1 text-xs text-amber-500">Date adjusted to Feb 2024</p>
+              {endDate && !isValidDateFormat(endDate) && (
+                <p className="mt-1 text-xs text-red-500">Invalid date format. Use YYYY-MM-DD</p>
               )}
             </div>
             
@@ -605,26 +615,6 @@ export default function ExpensesPage() {
       
       {/* Expenses table */}
       <div className="mt-6">
-        {/* Add date validation notice */}
-        {(startDate && startDate > '2024-02-29') || (endDate && endDate > '2024-02-29') ? (
-          <div className="mb-4 bg-amber-50 border border-amber-200 text-amber-700 px-5 py-4 rounded-lg shadow-sm">
-            <div className="flex">
-              <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0" />
-              <div>
-                <p className="font-medium">Date Validation Notice</p>
-                <p className="text-sm mt-1">
-                  You're filtering for dates {startDate && endDate ? 'between ' + startDate + ' and ' + endDate : 
-                   startDate ? 'after ' + startDate : 'before ' + endDate}, 
-                  but the server can only process dates up to February 29, 2024.
-                </p>
-                <p className="text-sm mt-1">
-                  Showing data from February 2024 instead. <button onClick={clearFilters} className="text-blue-600 underline">Clear filters</button>
-                </p>
-              </div>
-            </div>
-          </div>
-        ) : null}
-        
         {/* Search debugging information */}
         {searchQuery && expenses.length === 0 && !loading && !error ? (
           <div className="mb-4 bg-blue-50 border border-blue-200 text-blue-700 px-5 py-4 rounded-lg shadow-sm">
@@ -662,7 +652,7 @@ export default function ExpensesPage() {
                     <p className="text-sm">Try these solutions:</p>
                     <ul className="list-disc pl-5 text-sm mt-1 space-y-1">
                       <li>Clear your date filters and try again</li>
-                      <li>Select dates only in February 2024 or earlier</li>
+                      <li>Ensure your dates are in the correct YYYY-MM-DD format</li>
                       <li>Use the search function directly without date filters</li>
                     </ul>
                     <div className="mt-3 flex space-x-3">
