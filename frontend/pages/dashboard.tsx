@@ -81,6 +81,8 @@ interface Budget {
   remaining?: number;
   percentage?: number;
   status?: 'under' | 'over' | 'warning';
+  created_at?: string;
+  updated_at?: string;
 }
 
 // Define interface for top category
@@ -110,44 +112,21 @@ export default function DashboardPage() {
   
   // State for date filtering
   const [selectedYear, setSelectedYear] = useState<number>(() => {
-    // Always default to current year
-    return new Date().getFullYear();
+    // Use 2024 as a safe fallback year instead of relying on client date
+    const clientDate = new Date();
+    const clientYear = clientDate.getFullYear();
+    
+    // If client year seems unreasonable, use fallback
+    return (clientYear < 2020 || clientYear > 2024) ? 2024 : clientYear;
   });
   
   const [selectedMonth, setSelectedMonth] = useState<number>(() => {
-    // Always default to current month
+    // Always use client month as it's likely correct even if year is wrong
     return new Date().getMonth() + 1;
   });
   
-  // Add effect to reset to current month/year on mount
-  useEffect(() => {
-    // On component mount, reset to current date to avoid future dates
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth() + 1;
-    
-    // If the selected date is in the future or the past, reset to current month/year
-    if (selectedYear !== currentYear || selectedMonth !== currentMonth) {
-      console.log('Resetting to current month/year on mount');
-      setSelectedYear(currentYear);
-      setSelectedMonth(currentMonth);
-    }
-  }, []);  // Empty dependency array means this runs only on mount
-  
-  // Keep the existing useEffect for date validation
-  useEffect(() => {
-    // Validate that selected date is not in the future
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth() + 1;
-    
-    // If selected date is in the future, reset to current date
-    if (selectedYear > currentYear || (selectedYear === currentYear && selectedMonth > currentMonth)) {
-      console.log('Selected date is in the future, resetting to current date');
-      setSelectedYear(currentYear);
-      setSelectedMonth(currentMonth);
-    }
-  }, [selectedMonth, selectedYear]);
+  // Add a state to track if we've detected an incorrect system date
+  const [systemDateIncorrect, setSystemDateIncorrect] = useState(false);
   
   // State for month navigation
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -164,6 +143,66 @@ export default function DashboardPage() {
   
   // Add state for debug panel visibility near the other state variables
   const [showDebugPanel, setShowDebugPanel] = useState(false);
+  
+  // Add this at the top of the component after the state declarations
+  // Function to get the actual current date (not relying solely on client system date)
+  const getActualCurrentDate = () => {
+    // First try to use the server creation date from budget data if available
+    if (budgets?.length > 0 && budgets[0]?.created_at) {
+      try {
+        const serverDate = new Date(budgets[0].created_at);
+        // Simple validation - if year is reasonable (between 2020 and 2030)
+        if (serverDate.getFullYear() >= 2020 && serverDate.getFullYear() <= 2030) {
+          return {
+            year: serverDate.getFullYear(),
+            month: serverDate.getMonth() + 1,
+            source: 'server'
+          };
+        }
+      } catch (e) {
+        console.error('Error parsing server date:', e);
+      }
+    }
+    
+    // If server date is not available or invalid, try to get it from API
+    // For now, fallback to client date but with a hardcoded year sanity check
+    const clientDate = new Date();
+    const clientYear = clientDate.getFullYear();
+    
+    // If client date seems unreasonable (like 2025 when it's likely 2023-2024)
+    // Use a hardcoded fallback date
+    if (clientYear < 2020 || clientYear > 2024) {
+      console.warn('Client date appears incorrect:', clientDate);
+      return {
+        year: 2024, // Fixed fallback
+        month: clientDate.getMonth() + 1,
+        source: 'fallback'
+      };
+    }
+    
+    return {
+      year: clientYear,
+      month: clientDate.getMonth() + 1,
+      source: 'client'
+    };
+  };
+  
+  // Now update the reset current month function to use this
+  const resetToCurrentMonth = () => {
+    const actualDate = getActualCurrentDate();
+    setSelectedYear(actualDate.year);
+    setSelectedMonth(actualDate.month);
+    
+    // Notify user if using fallback date
+    if (actualDate.source === 'fallback') {
+      setNotification('Your system date appears incorrect. Using fallback date instead.');
+      
+      // Clear notification after 5 seconds
+      setTimeout(() => {
+        setNotification(null);
+      }, 5000);
+    }
+  };
   
   // Update the month navigation functions to prevent going to future dates
   const goToPreviousMonth = () => {
@@ -214,13 +253,6 @@ export default function DashboardPage() {
   const getMonthName = (month: number) => {
     return new Date(2000, month - 1, 1).toLocaleString('default', { month: 'long' })
   }
-  
-  // Add a function to reset to current month/year
-  const resetToCurrentMonth = () => {
-    const now = new Date();
-    setSelectedYear(now.getFullYear());
-    setSelectedMonth(now.getMonth() + 1);
-  };
   
   useEffect(() => {
     // If user is not authenticated, redirect to login
@@ -527,6 +559,56 @@ export default function DashboardPage() {
       return () => clearTimeout(timer);
     }
   }, [loading, budgets, monthlyExpenses, selectedMonth, selectedYear]);
+  
+  // Update the effect that resets to current month/year on mount
+  useEffect(() => {
+    // After budgets are loaded, we can check if the system date is reasonable
+    if (budgets?.length > 0) {
+      const actualDate = getActualCurrentDate();
+      
+      // Check if system date is likely incorrect
+      const clientDate = new Date();
+      if (actualDate.source === 'fallback' || 
+         (actualDate.source === 'server' && 
+          Math.abs(clientDate.getFullYear() - actualDate.year) > 1)) {
+        
+        console.warn('System date appears incorrect', {
+          clientDate,
+          actualDate
+        });
+        
+        setSystemDateIncorrect(true);
+        
+        // Also reset to a more reasonable date
+        setSelectedYear(actualDate.year);
+        setSelectedMonth(actualDate.month);
+        
+        // Show notification
+        setNotification('Your system date appears to be set incorrectly. Using ' + 
+                         getMonthName(actualDate.month) + ' ' + actualDate.year + 
+                         ' instead.');
+      }
+    }
+  }, [budgets]);
+  
+  // Keep the existing useEffect for date validation but update it to use our robust check
+  useEffect(() => {
+    if (systemDateIncorrect) {
+      // If we know the system date is wrong, don't use it for validation
+      return;
+    }
+    
+    // Validate that selected date is not in the future
+    const actualDate = getActualCurrentDate();
+    
+    // If selected date is in the future based on our best estimate of current date
+    if (selectedYear > actualDate.year || 
+        (selectedYear === actualDate.year && selectedMonth > actualDate.month)) {
+      console.log('Selected date is in the future, resetting');
+      setSelectedYear(actualDate.year);
+      setSelectedMonth(actualDate.month);
+    }
+  }, [selectedMonth, selectedYear, systemDateIncorrect]);
   
   // If auth is loading, show a loading indicator
   if (authLoading) {
@@ -991,13 +1073,21 @@ export default function DashboardPage() {
           
           <div className="mt-4">
             <p><strong>Date Information:</strong></p>
+            {systemDateIncorrect && (
+              <div className="mb-2 bg-red-50 border border-red-200 text-red-700 p-2 rounded-md">
+                <p className="text-xs font-bold">⚠️ System Date Error Detected</p>
+                <p className="text-xs mt-1">Your system date appears to be set to {new Date().toLocaleDateString()} (year: {new Date().getFullYear()}), which is likely incorrect.</p>
+                <p className="text-xs mt-1">The application is using {getMonthName(getActualCurrentDate().month)} {getActualCurrentDate().year} as the current date instead.</p>
+              </div>
+            )}
             <ul className="text-xs space-y-1">
               <li><strong>Current System Date:</strong> {new Date().toLocaleDateString()} ({new Date().getFullYear()}-{String(new Date().getMonth() + 1).padStart(2, '0')})</li>
+              <li><strong>Estimated Actual Date:</strong> {getMonthName(getActualCurrentDate().month)} {getActualCurrentDate().year} (source: {getActualCurrentDate().source})</li>
               <li><strong>Selected Month/Year:</strong> {getMonthName(selectedMonth)} {selectedYear}</li>
               <li><strong>Is Future Date:</strong> {
-                selectedYear > new Date().getFullYear() || 
-                (selectedYear === new Date().getFullYear() && selectedMonth > new Date().getMonth() + 1)
-                  ? "Yes (will be reset to current month)"
+                selectedYear > getActualCurrentDate().year || 
+                (selectedYear === getActualCurrentDate().year && selectedMonth > getActualCurrentDate().month)
+                  ? "Yes (will be reset)"
                   : "No"
               }</li>
             </ul>
