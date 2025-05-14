@@ -193,6 +193,8 @@ export default function ExpensesPage() {
           }
           
           setLoading(false)
+          // Clear any previous error message if the request was successful
+          setError('')
         } catch (apiError: any) {
           console.error('API request error:', apiError)
           console.error('Request details:', {
@@ -204,7 +206,29 @@ export default function ExpensesPage() {
           })
           console.error('Error data:', apiError.response?.data)
           
-          setError(apiError.response?.data?.detail || 'Failed to fetch data from server')
+          // Set more user-friendly error message based on the status code
+          if (apiError.response?.status === 422) {
+            setError('There was a problem with the date format. Please try adjusting your date filters.')
+            
+            // Try again without the date parameters if they're causing issues
+            try {
+              const safeParams = { ...params };
+              delete safeParams.start_date;
+              delete safeParams.end_date;
+              
+              console.log('Retrying with safe parameters (no dates):', safeParams);
+              const safeExpenses = await expenseAPI.getAllExpenses(safeParams);
+              
+              if (Array.isArray(safeExpenses)) {
+                setExpenses(safeExpenses);
+                setError('Date filters were ignored due to format issues. Showing all available expenses.');
+              }
+            } catch (retryError) {
+              console.error('Retry also failed:', retryError);
+            }
+          } else {
+            setError(apiError.response?.data?.detail || 'Failed to fetch data from server')
+          }
           setLoading(false)
         }
       } catch (err: any) {
@@ -264,6 +288,36 @@ export default function ExpensesPage() {
       }
     }
   }
+  
+  // New function to specifically handle search without other filters
+  const handleSearchOnly = async () => {
+    if (!searchQuery.trim()) {
+      return; // Don't do anything if search is empty
+    }
+    
+    setLoading(true);
+    setError('');
+    
+    try {
+      // Only use the search parameter, nothing else
+      const searchParams = { search: searchQuery.trim() };
+      console.log('Performing search-only query:', searchParams);
+      
+      const results = await expenseAPI.getAllExpenses(searchParams);
+      if (Array.isArray(results)) {
+        setExpenses(results);
+        console.log(`Found ${results.length} results for search: "${searchQuery}"`);
+      } else {
+        setExpenses([]);
+        console.error('Received non-array search results:', results);
+      }
+    } catch (err) {
+      console.error('Search-only error:', err);
+      setError('Search failed. Please try again or adjust your search term.');
+    } finally {
+      setLoading(false);
+    }
+  };
   
   const clearFilters = () => {
     setSearchQuery('')
@@ -342,9 +396,18 @@ export default function ExpensesPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all duration-200"
-                placeholder="Search expenses..."
+                onKeyDown={(e) => e.key === 'Enter' && handleSearchOnly()}
+                className="block w-full pl-10 pr-20 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all duration-200"
+                placeholder="Search expenses description..."
               />
+              <div className="absolute inset-y-0 right-0 flex items-center">
+                <button 
+                  onClick={handleSearchOnly}
+                  className="h-full px-4 py-2 text-sm bg-blue-600 text-white rounded-r-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  Search
+                </button>
+              </div>
             </div>
           </div>
           
@@ -590,9 +653,37 @@ export default function ExpensesPage() {
           </div>
         ) : error ? (
           <div className="bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-lg shadow-sm">
-            <div className="flex">
-              <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0" />
-              <span>{error}</span>
+            <div className="flex items-start">
+              <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium">{error}</p>
+                {error.includes('date') && (
+                  <div className="mt-2">
+                    <p className="text-sm">Try these solutions:</p>
+                    <ul className="list-disc pl-5 text-sm mt-1 space-y-1">
+                      <li>Clear your date filters and try again</li>
+                      <li>Select dates only in February 2024 or earlier</li>
+                      <li>Use the search function directly without date filters</li>
+                    </ul>
+                    <div className="mt-3 flex space-x-3">
+                      <button 
+                        onClick={clearFilters}
+                        className="px-3 py-1 text-xs bg-red-100 text-red-800 rounded hover:bg-red-200"
+                      >
+                        Clear All Filters
+                      </button>
+                      {searchQuery && (
+                        <button 
+                          onClick={handleSearchOnly}
+                          className="px-3 py-1 text-xs bg-blue-100 text-blue-800 rounded hover:bg-blue-200"
+                        >
+                          Search Without Filters
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         ) : expenses.length === 0 ? (

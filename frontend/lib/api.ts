@@ -181,28 +181,31 @@ export const expenseAPI = {
     limit?: number
   }) => {
     try {
-      // No need to validate dates against a fixed date - use actual current date
-      // Build query string from params
-      let queryParams = '';
-      if (params) {
-        const paramEntries = Object.entries(params)
-          .filter(([_, value]) => value !== undefined && value !== null)
-          .map(([key, value]) => `${key}=${encodeURIComponent(value)}`);
-        
-        if (paramEntries.length > 0) {
-          queryParams = `?${paramEntries.join('&')}`;
-        }
+      // Format dates to ensure they match the expected format on the backend
+      const formattedParams = { ...params };
+      
+      // Properly format dates to ISO string that FastAPI can process
+      if (formattedParams?.start_date) {
+        // Ensure it's in YYYY-MM-DDT00:00:00 format for FastAPI's datetime parsing
+        const startDate = new Date(formattedParams.start_date);
+        formattedParams.start_date = startDate.toISOString().split('T')[0] + 'T00:00:00';
       }
       
-      console.log(`Fetching expenses with params:`, params);
+      if (formattedParams?.end_date) {
+        // For end date, set it to the end of the day (23:59:59)
+        const endDate = new Date(formattedParams.end_date);
+        formattedParams.end_date = endDate.toISOString().split('T')[0] + 'T23:59:59';
+      }
+      
+      console.log(`Fetching expenses with formatted params:`, formattedParams);
       
       // Log search parameters specifically for debugging
-      if (params?.search) {
-        console.log(`Search query provided: "${params.search}"`);
+      if (formattedParams?.search) {
+        console.log(`Search query provided: "${formattedParams.search}"`);
       }
       
       const response = await api.get('/api/expenses', { 
-        params: params 
+        params: formattedParams 
       });
       
       console.log(`Fetched ${response.data?.length || 0} expenses successfully`);
