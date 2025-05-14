@@ -224,8 +224,8 @@ export default function DashboardPage() {
         
         // Calculate total expenses for the current month with currency conversion
         const total = expenses.reduce((sum, expense) => 
-          sum + convertAmount(expense.amount, expense.currency), 0)
-        setTotalExpenses(total)
+          sum + convertAmount(expense.amount, expense.currency), 0);
+        setTotalExpenses(total);
         
         // Calculate previous month total for comparison
         const prevTotal = Array.isArray(prevMonthExpenses) ? 
@@ -245,9 +245,8 @@ export default function DashboardPage() {
           setMonthlyChangePercent(total > 0 ? 100 : 0);
         }
         
-        // Update categories with spent amounts for the current month
         const categoriesWithSpending = fetchedCategories.map(category => {
-          const catExpenses = monthlyExpenses.filter(exp => exp.category_id === category.id)
+          const catExpenses = expenses.filter(exp => exp.category_id === category.id)
           const spent = catExpenses.reduce((sum, exp) => sum + convertAmount(exp.amount, exp.currency), 0)
           
           return {
@@ -262,7 +261,7 @@ export default function DashboardPage() {
         
         // Calculate totals by category
         const catTotals = categoriesWithSpending.map(category => {
-          const catExpenses = monthlyExpenses.filter(exp => exp.category_id === category.id)
+          const catExpenses = expenses.filter(exp => exp.category_id === category.id)
           const catTotal = catExpenses.reduce((sum, exp) => sum + convertAmount(exp.amount, exp.currency), 0)
           const percentage = total > 0 ? (catTotal / total * 100).toFixed(1) : 0
           
@@ -294,8 +293,8 @@ export default function DashboardPage() {
             const processedBudgets = fetchedBudgets.map(budget => {
               const category = categoriesWithSpending.find(cat => cat.id === budget.category_id)
               
-              // Use the monthlyExpenses for the selected month instead of all expenses
-              const categoryExpenses = monthlyExpenses.filter(exp => exp.category_id === budget.category_id)
+              // Use the filtered expenses for the current month
+              const categoryExpenses = expenses.filter(exp => exp.category_id === budget.category_id)
               
               // Convert all expense amounts to the user's preferred currency
               const spentAmount = categoryExpenses.reduce((sum, exp) => 
