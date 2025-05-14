@@ -171,6 +171,7 @@ export const categoryAPI = {
 // Expense APIs
 export const expenseAPI = {
   getAllExpenses: async (params?: {
+    search?: string
     category_id?: number
     start_date?: string
     end_date?: string
@@ -195,6 +196,11 @@ export const expenseAPI = {
       
       console.log(`Fetching expenses with params:`, params);
       
+      // Log search parameters specifically for debugging
+      if (params?.search) {
+        console.log(`Search query provided: "${params.search}"`);
+      }
+      
       const response = await api.get('/api/expenses', { 
         params: params 
       });
@@ -206,6 +212,24 @@ export const expenseAPI = {
       return response.data;
     } catch (error: any) {
       console.error('Error in getAllExpenses:', error);
+      
+      // Provide more detailed diagnostics for production environment
+      if (process.env.NODE_ENV === 'production') {
+        console.error('Production error details:', {
+          message: error.message,
+          config: error.config ? {
+            url: error.config.url,
+            method: error.config.method,
+            params: error.config.params,
+            baseURL: error.config.baseURL
+          } : 'No config',
+          response: error.response ? {
+            status: error.response.status,
+            statusText: error.response.statusText,
+            data: error.response.data
+          } : 'No response'
+        });
+      }
       
       // Return empty array instead of throwing to avoid breaking the UI
       return [];

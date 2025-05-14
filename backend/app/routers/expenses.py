@@ -22,6 +22,7 @@ router = APIRouter()
 
 @router.get("/", response_model=List[ExpenseWithCategory])
 def get_expenses(
+    search: Optional[str] = None,
     category_id: Optional[int] = None,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
@@ -37,12 +38,16 @@ def get_expenses(
     """
     try:
         print(f"Fetching expenses for user_id={current_user.id} with filters: "
-              f"category_id={category_id}, start_date={start_date}, end_date={end_date}, "
+              f"search={search}, category_id={category_id}, start_date={start_date}, end_date={end_date}, "
               f"min_amount={min_amount}, max_amount={max_amount}, skip={skip}, limit={limit}")
         
         query = db.query(Expense).filter(Expense.user_id == current_user.id)
         
         # Apply filters if provided
+        if search:
+            search_term = f"%{search}%"
+            print(f"Searching for expenses with description like: {search_term}")
+            query = query.filter(Expense.description.ilike(search_term))
         if category_id:
             query = query.filter(Expense.category_id == category_id)
         if start_date:
@@ -305,6 +310,7 @@ def get_monthly_summary(
 @router.get("/admin/all", response_model=List[ExpenseWithCategory])
 def get_all_expenses(
     user_id: Optional[int] = None,
+    search: Optional[str] = None,
     category_id: Optional[int] = None,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
@@ -321,6 +327,9 @@ def get_all_expenses(
     # Apply filters if provided
     if user_id:
         query = query.filter(Expense.user_id == user_id)
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(Expense.description.ilike(search_term))
     if category_id:
         query = query.filter(Expense.category_id == category_id)
     if start_date:

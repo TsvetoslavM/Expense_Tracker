@@ -162,7 +162,8 @@ export default function ExpensesPage() {
           adjustedStartDate: params.start_date,
           adjustedEndDate: params.end_date,
           isStartDateBeyondLimit,
-          isEndDateBeyondLimit
+          isEndDateBeyondLimit,
+          searchQuery
         });
         
         console.log('Using token:', token.substring(0, 10) + '...')
@@ -555,6 +556,27 @@ export default function ExpensesPage() {
                 </p>
                 <p className="text-sm mt-1">
                   Showing data from February 2024 instead. <button onClick={clearFilters} className="text-blue-600 underline">Clear filters</button>
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : null}
+        
+        {/* Search debugging information */}
+        {searchQuery && expenses.length === 0 && !loading && !error ? (
+          <div className="mb-4 bg-blue-50 border border-blue-200 text-blue-700 px-5 py-4 rounded-lg shadow-sm">
+            <div className="flex">
+              <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0" />
+              <div>
+                <p className="font-medium">Search Information</p>
+                <p className="text-sm mt-1">
+                  You searched for "{searchQuery}" but no matching expenses were found.
+                </p>
+                <p className="text-sm mt-1">
+                  The search looks for matches in the expense description.
+                </p>
+                <p className="text-sm mt-1">
+                  <button onClick={clearFilters} className="text-blue-600 underline">Clear search</button>
                 </p>
               </div>
             </div>
