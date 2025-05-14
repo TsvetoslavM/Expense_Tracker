@@ -110,17 +110,31 @@ export default function DashboardPage() {
   
   // State for date filtering
   const [selectedYear, setSelectedYear] = useState<number>(() => {
-    // Default to current year, never allow future years
-    const currentYear = new Date().getFullYear();
-    return currentYear;
+    // Always default to current year
+    return new Date().getFullYear();
   });
   
   const [selectedMonth, setSelectedMonth] = useState<number>(() => {
-    // Default to current month, never allow future months
+    // Always default to current month
     return new Date().getMonth() + 1;
   });
   
-  // Add effect to validate selected date on component mount and when date changes
+  // Add effect to reset to current month/year on mount
+  useEffect(() => {
+    // On component mount, reset to current date to avoid future dates
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    
+    // If the selected date is in the future or the past, reset to current month/year
+    if (selectedYear !== currentYear || selectedMonth !== currentMonth) {
+      console.log('Resetting to current month/year on mount');
+      setSelectedYear(currentYear);
+      setSelectedMonth(currentMonth);
+    }
+  }, []);  // Empty dependency array means this runs only on mount
+  
+  // Keep the existing useEffect for date validation
   useEffect(() => {
     // Validate that selected date is not in the future
     const now = new Date();
@@ -200,6 +214,13 @@ export default function DashboardPage() {
   const getMonthName = (month: number) => {
     return new Date(2000, month - 1, 1).toLocaleString('default', { month: 'long' })
   }
+  
+  // Add a function to reset to current month/year
+  const resetToCurrentMonth = () => {
+    const now = new Date();
+    setSelectedYear(now.getFullYear());
+    setSelectedMonth(now.getMonth() + 1);
+  };
   
   useEffect(() => {
     // If user is not authenticated, redirect to login
@@ -492,6 +513,21 @@ export default function DashboardPage() {
     }
   }
   
+  // Add this after the existing useEffect for data fetching
+  useEffect(() => {
+    // Show notification when there are budgets but no expenses for the selected month
+    if (!loading && budgets?.length > 0 && monthlyExpenses?.length === 0) {
+      setNotification(`No expenses found for ${getMonthName(selectedMonth)} ${selectedYear}, but you have ${budgets.length} budget(s) set up.`);
+      
+      // Clear notification after 5 seconds
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [loading, budgets, monthlyExpenses, selectedMonth, selectedYear]);
+  
   // If auth is loading, show a loading indicator
   if (authLoading) {
     return <div className="flex h-screen items-center justify-center">
@@ -544,6 +580,14 @@ export default function DashboardPage() {
               </Button>
               <Button 
                 variant="outline" 
+                size="sm"
+                onClick={resetToCurrentMonth}
+                className="h-8 px-2 text-xs"
+              >
+                Today
+              </Button>
+              <Button 
+                variant="outline" 
                 size="icon"
                 onClick={goToNextMonth}
                 disabled={
@@ -566,6 +610,26 @@ export default function DashboardPage() {
             <ArrowUpRight className="ml-1.5 h-3.5 w-3.5" />
           </Button>
         </div>
+        
+        {/* Add indicator when no expenses for selected month */}
+        {!loading && monthlyExpenses.length === 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-md p-3 flex items-center text-amber-800">
+            <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0 text-amber-500" />
+            <div>
+              <p className="text-sm font-medium">No expenses found for {getMonthName(selectedMonth)} {selectedYear}</p>
+              <p className="text-xs mt-0.5">Add expenses for this month to see your spending statistics.</p>
+            </div>
+            <Button 
+              variant="outline"
+              size="sm"
+              className="ml-auto text-xs"
+              onClick={() => router.push('/expenses/new')}
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Add Expense
+            </Button>
+          </div>
+        )}
       </div>
       
       {/* Stats cards */}
@@ -926,12 +990,32 @@ export default function DashboardPage() {
           </div>
           
           <div className="mt-4">
+            <p><strong>Date Information:</strong></p>
+            <ul className="text-xs space-y-1">
+              <li><strong>Current System Date:</strong> {new Date().toLocaleDateString()} ({new Date().getFullYear()}-{String(new Date().getMonth() + 1).padStart(2, '0')})</li>
+              <li><strong>Selected Month/Year:</strong> {getMonthName(selectedMonth)} {selectedYear}</li>
+              <li><strong>Is Future Date:</strong> {
+                selectedYear > new Date().getFullYear() || 
+                (selectedYear === new Date().getFullYear() && selectedMonth > new Date().getMonth() + 1)
+                  ? "Yes (will be reset to current month)"
+                  : "No"
+              }</li>
+            </ul>
+          </div>
+          
+          <div className="mt-4">
             <p><strong>Budget Processing:</strong></p>
             <div className="bg-gray-50 p-2 rounded text-xs font-mono max-h-40 overflow-y-auto">
               <pre>
                 {JSON.stringify(budgets?.slice(0, 3) || [], null, 2)}
               </pre>
             </div>
+            {budgets?.length > 0 && budgets[0]?.year !== new Date().getFullYear() && (
+              <div className="mt-2 text-red-600 text-xs font-medium p-2 bg-red-50 rounded">
+                Warning: Budget data is for {budgets[0]?.month}/{budgets[0]?.year} (not the current month/year).
+                This may indicate a synchronization issue between budgets and expenses.
+              </div>
+            )}
           </div>
         </div>
       )}
