@@ -171,12 +171,15 @@ export default function DashboardPage() {
     setError(null);
     
     try {
-      // First day of the selected month
-      const startDate = `${selectedYear}-${selectedMonth.toString().padStart(2, '0')}-01`;
+      // First day of the selected month - ensure we're using proper date format
+      // Adding padStart to ensure single digit months and days have leading zeros
+      const startDate = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`;
       
       // Calculate the last day of the selected month
       const lastDay = new Date(selectedYear, selectedMonth, 0).getDate();
-      const endDate = `${selectedYear}-${selectedMonth.toString().padStart(2, '0')}-${lastDay}`;
+      const endDate = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+      
+      console.log('Fetching expenses with date range:', { startDate, endDate });
       
       // Add date filtering to expenses API call
       const expenses = await expenseAPI.getAllExpenses({
@@ -185,6 +188,8 @@ export default function DashboardPage() {
         start_date: startDate,
         end_date: endDate
       });
+      
+      console.log('Received expenses:', expenses.length);
       
       // Store the monthly expenses
       setMonthlyExpenses(expenses);
@@ -199,9 +204,11 @@ export default function DashboardPage() {
       }
       
       // First and last day of previous month
-      const prevStartDate = `${prevYear}-${prevMonth.toString().padStart(2, '0')}-01`;
+      const prevStartDate = `${prevYear}-${String(prevMonth).padStart(2, '0')}-01`;
       const prevLastDay = new Date(prevYear, prevMonth, 0).getDate();
-      const prevEndDate = `${prevYear}-${prevMonth.toString().padStart(2, '0')}-${prevLastDay}`;
+      const prevEndDate = `${prevYear}-${String(prevMonth).padStart(2, '0')}-${String(prevLastDay).padStart(2, '0')}`;
+      
+      console.log('Fetching previous month expenses:', { prevStartDate, prevEndDate });
       
       // Get previous month expenses
       const prevMonthExpenses = await expenseAPI.getAllExpenses({
@@ -211,14 +218,18 @@ export default function DashboardPage() {
         end_date: prevEndDate
       });
       
+      console.log('Received previous month expenses:', prevMonthExpenses.length);
+      
       // Fetch categories after expenses
       const fetchedCategories = await categoryAPI.getAllCategories()
       
       if (Array.isArray(expenses) && Array.isArray(fetchedCategories)) {
-        // Get the 5 most recent expenses
-        const recent = [...expenses].sort((a, b) => 
-          new Date(b.date).getTime() - new Date(a.date).getTime()
-        ).slice(0, 6)
+        // Get the 5 most recent expenses - ensure we handle the case where expenses is empty
+        const recent = expenses.length > 0 
+          ? [...expenses].sort((a, b) => 
+              new Date(b.date).getTime() - new Date(a.date).getTime()
+            ).slice(0, 6)
+          : [];
         
         setRecentExpenses(recent)
         
@@ -428,7 +439,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard 
           title="Monthly Expenses" 
-          value={formatAmount(totalExpenses)}
+          value={formatAmount(totalExpenses || 0)}
           description={
             <div className="flex items-center text-sm">
               <span className={monthlyChange < 0 ? 'text-green-600' : 'text-red-600'}>
@@ -437,7 +448,7 @@ export default function DashboardPage() {
                 ) : (
                   <ArrowUpRight className="inline h-3.5 w-3.5 mr-1" />
                 )}
-                {Math.abs(monthlyChangePercent).toFixed(1)}% 
+                {Math.abs(monthlyChangePercent || 0).toFixed(1)}% 
               </span>
               <span className="text-gray-500 ml-1">vs last month</span>
             </div>
@@ -449,7 +460,7 @@ export default function DashboardPage() {
         
         <StatCard 
           title="Total Categories" 
-          value={categories.length}
+          value={categories?.length || 0}
           description="Active spending categories"
           icon={<Tag className="h-4 w-4" />}
           loading={loading}
@@ -458,7 +469,7 @@ export default function DashboardPage() {
         
         <StatCard 
           title="Active Budgets" 
-          value={budgets.length}
+          value={budgets?.length || 0}
           description="Budgets for this month"
           icon={<DollarSign className="h-4 w-4" />}
           loading={loading}
@@ -467,7 +478,7 @@ export default function DashboardPage() {
         
         <StatCard 
           title="Recent Activity" 
-          value={monthlyExpenses.length}
+          value={monthlyExpenses?.length || 0}
           description="New transactions this month"
           icon={<Clock className="h-4 w-4" />}
           loading={loading}
@@ -497,30 +508,28 @@ export default function DashboardPage() {
               </div>
             </div>
             
-            {recentExpenses.length === 0 ? (
+            {loading ? (
+              <div className="flex justify-center items-center h-48 p-6">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+              </div>
+            ) : (!recentExpenses || recentExpenses.length === 0) ? (
               <div className="p-6 text-center">
-                {loading ? (
-                  <div className="flex justify-center items-center h-48">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                <div className="py-12">
+                  <div className="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                    <Wallet className="h-6 w-6 text-gray-400" />
                   </div>
-                ) : (
-                  <div className="py-12">
-                    <div className="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                      <Wallet className="h-6 w-6 text-gray-400" />
-                    </div>
-                    <h3 className="text-gray-500 text-lg font-medium mb-2">No expenses yet</h3>
-                    <p className="text-gray-400 max-w-md mx-auto mb-6">
-                      Start tracking your spending to gain insights into your financial habits.
-                    </p>
-                    <Button 
-                      onClick={() => router.push('/expenses/new')}
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      <Plus className="mr-1.5 h-4 w-4" />
-                      Add Your First Expense
-                    </Button>
-                  </div>
-                )}
+                  <h3 className="text-gray-500 text-lg font-medium mb-2">No expenses found</h3>
+                  <p className="text-gray-400 max-w-md mx-auto mb-6">
+                    No expenses recorded for {getMonthName(selectedMonth)} {selectedYear} yet.
+                  </p>
+                  <Button 
+                    onClick={() => router.push('/expenses/new')}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Plus className="mr-1.5 h-4 w-4" />
+                    Add New Expense
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -558,15 +567,15 @@ export default function DashboardPage() {
                           <span 
                             className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                             style={{
-                              backgroundColor: expense.category.color 
+                              backgroundColor: expense.category?.color 
                                 ? `${expense.category.color}20`  // 20 is hex for 12% opacity
                                 : '#E5E7EB',
-                              color: expense.category.color 
+                              color: expense.category?.color 
                                 ? expense.category.color 
                                 : '#374151'
                             }}
                           >
-                            {expense.category.name || 'Uncategorized'}
+                            {expense.category?.name || 'Uncategorized'}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
@@ -602,29 +611,32 @@ export default function DashboardPage() {
               </div>
             </div>
             
-            {categories.length === 0 ? (
+            {loading ? (
+              <div className="flex justify-center items-center h-48 p-6">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+              </div>
+            ) : (!categories || categories.length === 0 || !categories.some(cat => (cat.spent || 0) > 0)) ? (
               <div className="p-6 text-center">
-                {loading ? (
-                  <div className="flex justify-center items-center h-48">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                <div className="py-10">
+                  <div className="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                    <Tag className="h-6 w-6 text-gray-400" />
                   </div>
-                ) : (
-                  <div className="py-10">
-                    <div className="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                      <Tag className="h-6 w-6 text-gray-400" />
-                    </div>
-                    <h3 className="text-gray-500 text-lg font-medium mb-2">No categories yet</h3>
-                    <p className="text-gray-400 max-w-md mx-auto mb-6">
-                      Create categories to organize your expenses and track your spending habits.
-                    </p>
-                    <Button 
-                      onClick={() => router.push('/categories/new')}
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      Add Categories
-                    </Button>
-                  </div>
-                )}
+                  <h3 className="text-gray-500 text-lg font-medium mb-2">
+                    {!categories || categories.length === 0 ? 'No categories yet' : 'No spending for this month'}
+                  </h3>
+                  <p className="text-gray-400 max-w-md mx-auto mb-6">
+                    {!categories || categories.length === 0 
+                      ? 'Create categories to organize your expenses and track your spending habits.'
+                      : `No category spending recorded for ${getMonthName(selectedMonth)} ${selectedYear}.`
+                    }
+                  </p>
+                  <Button 
+                    onClick={() => router.push(!categories || categories.length === 0 ? '/categories/new' : '/expenses/new')}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {!categories || categories.length === 0 ? 'Add Categories' : 'Add New Expense'}
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="divide-y divide-gray-200">
@@ -633,7 +645,7 @@ export default function DashboardPage() {
                   .sort((a, b) => (b.spent || 0) - (a.spent || 0))
                   .slice(0, 5)
                   .map((category) => {
-                    const budgetItem = budgets.find(b => b.category_id === category.id);
+                    const budgetItem = budgets?.find(b => b.category_id === category.id);
                     const budgetAmount = budgetItem ? convertAmount(budgetItem.amount, budgetItem.currency) : 0;
                     const spent = category.spent || 0;
                     const percentage = budgetAmount > 0 
@@ -690,12 +702,6 @@ export default function DashboardPage() {
                       </div>
                     );
                   })}
-                
-                {categories.filter(cat => cat.spent && cat.spent > 0).length === 0 && !loading && (
-                  <div className="p-6 text-center text-gray-500">
-                    No spending recorded for {getMonthName(selectedMonth)} {selectedYear} yet.
-                  </div>
-                )}
               </div>
             )}
           </Card>
@@ -712,6 +718,23 @@ export default function DashboardPage() {
           <AnnualSummaryChart defaultYear={selectedYear} />
         </div>
       </div>
+      
+      {/* Hidden debug info section - only shown when needed */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="mt-10 p-4 border border-gray-300 rounded-md bg-gray-50">
+          <h3 className="text-lg font-semibold mb-2">Debug Information</h3>
+          <div className="text-xs font-mono">
+            <p>Selected Month: {getMonthName(selectedMonth)} {selectedYear}</p>
+            <p>Monthly Expenses Count: {monthlyExpenses?.length || 0}</p>
+            <p>Recent Expenses Count: {recentExpenses?.length || 0}</p>
+            <p>Categories Count: {categories?.length || 0}</p>
+            <p>Categories with Spending: {categories?.filter(c => (c.spent || 0) > 0).length || 0}</p>
+            <p>Total Monthly Expenses: {formatAmount(totalExpenses || 0)}</p>
+            <p>Previous Month Total: {formatAmount(previousMonthTotal || 0)}</p>
+            <p>Environment: {process.env.NODE_ENV}</p>
+          </div>
+        </div>
+      )}
     </PageContainer>
   )
 } 

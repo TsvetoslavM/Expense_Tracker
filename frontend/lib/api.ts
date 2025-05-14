@@ -185,24 +185,52 @@ export const expenseAPI = {
       limit: 100
     };
     
+    // Deep copy params to avoid modifying the original
+    const formattedParams = { ...defaultParams, ...(params || {}) };
+    
     // Ensure dates are in proper ISO format (YYYY-MM-DD)
-    const formattedParams = { ...params };
-    if (formattedParams.start_date && !formattedParams.start_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      const date = new Date(formattedParams.start_date);
-      formattedParams.start_date = date.toISOString().split('T')[0];
-    }
-    if (formattedParams.end_date && !formattedParams.end_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      const date = new Date(formattedParams.end_date);
-      formattedParams.end_date = date.toISOString().split('T')[0];
+    if (formattedParams.start_date) {
+      // Check if it's already a correctly formatted ISO date
+      if (!formattedParams.start_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        try {
+          const date = new Date(formattedParams.start_date);
+          // Format as YYYY-MM-DD with padding
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          formattedParams.start_date = `${year}-${month}-${day}`;
+        } catch (e) {
+          console.error('Error formatting start_date:', e);
+          delete formattedParams.start_date; // Remove invalid date
+        }
+      }
     }
     
-    // Merge user provided params with defaults
-    const requestParams = { ...defaultParams, ...formattedParams };
+    if (formattedParams.end_date) {
+      // Check if it's already a correctly formatted ISO date
+      if (!formattedParams.end_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        try {
+          const date = new Date(formattedParams.end_date);
+          // Format as YYYY-MM-DD with padding
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          formattedParams.end_date = `${year}-${month}-${day}`;
+        } catch (e) {
+          console.error('Error formatting end_date:', e);
+          delete formattedParams.end_date; // Remove invalid date
+        }
+      }
+    }
+    
+    // Log params for debugging
+    console.log('Expenses API params:', formattedParams);
     
     try {
       const response = await api.get('/api/expenses', { 
-        params: requestParams 
+        params: formattedParams 
       });
+      console.log('API response status:', response.status);
       return response.data;
     } catch (error) {
       console.error('Error in getAllExpenses:', error);
