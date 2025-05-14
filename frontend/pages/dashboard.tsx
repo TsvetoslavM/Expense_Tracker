@@ -112,7 +112,6 @@ export default function DashboardPage() {
   
   // State for date filtering
   const [selectedYear, setSelectedYear] = useState<number>(() => {
-    // Use 2024 as a safe fallback year instead of relying on client date
     const clientDate = new Date();
     const clientYear = clientDate.getFullYear();
     
@@ -579,7 +578,6 @@ export default function DashboardPage() {
                 </span>
                 <span className="text-gray-500 ml-1">vs last month</span>
               </div>
-              <span className="text-xs text-blue-500 mt-1">From Annual Summary</span>
             </div>
           }
           icon={<Wallet className="h-4 w-4" />}
