@@ -117,7 +117,7 @@ export default function DashboardPage() {
     const clientYear = clientDate.getFullYear();
     
     // If client year seems unreasonable, use fallback
-    return (clientYear < 2020 || clientYear > 2024) ? 2024 : clientYear;
+    return (clientYear < 2020 || clientYear > 2025) ? 2025 : clientYear;
   });
   
   const [selectedMonth, setSelectedMonth] = useState<number>(() => {
