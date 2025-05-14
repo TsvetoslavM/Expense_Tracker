@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { 
@@ -11,7 +11,9 @@ import {
   Trash2, 
   DollarSign, 
   CreditCard,
-  AlertCircle
+  AlertCircle,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { formatDate } from '@/lib/utils'
@@ -83,6 +85,9 @@ export default function ExpensesPage() {
   
   // Add new state for categories loading
   const [categoriesLoading, setCategoriesLoading] = useState(false)
+  
+  // Reference to track the previous sort parameters
+  const previousSortRef = useRef(`${sortBy}-${sortOrder}`);
   
   useEffect(() => {
     // Immediately ensure we have categories
@@ -157,7 +162,9 @@ export default function ExpensesPage() {
           console.log('Fetched expenses:', fetchedExpenses)
           
           if (Array.isArray(fetchedExpenses)) {
-            setExpenses(fetchedExpenses)
+            // Apply client-side sorting before setting the state
+            const sortedExpenses = sortExpenses(fetchedExpenses, sortBy, sortOrder);
+            setExpenses(sortedExpenses)
           } else {
             console.error('Received non-array expenses data:', fetchedExpenses)
             setExpenses([]) // Set empty array as fallback
@@ -225,6 +232,24 @@ export default function ExpensesPage() {
     
     fetchData()
   }, [searchQuery, selectedCategory, startDate, endDate, minAmount, maxAmount, sortBy, sortOrder])
+  
+  // Add an effect to sort expenses when sort parameters change
+  useEffect(() => {
+    // Use this effect only to handle direct sort changes (from dropdown or buttons)
+    // Skip this effect on initial render and when data is being fetched
+    if (expenses.length > 0 && !loading) {
+      // Store the current sort parameters to prevent unwanted re-renders
+      const currentSortKey = `${sortBy}-${sortOrder}`;
+      
+      // Store the previous sort parameters in a ref to check if they've changed
+      // This helps prevent infinite loops
+      if (previousSortRef.current !== currentSortKey) {
+        previousSortRef.current = currentSortKey;
+        const sortedExpenses = sortExpenses(expenses, sortBy, sortOrder);
+        setExpenses(sortedExpenses);
+      }
+    }
+  }, [sortBy, sortOrder, expenses, loading]);
   
   // New function to ensure categories exist
   const ensureCategoriesExist = async () => {
@@ -313,6 +338,40 @@ export default function ExpensesPage() {
     // Check if it's a valid date
     const date = new Date(dateString);
     return !isNaN(date.getTime());
+  };
+  
+  // Function to sort expenses based on different criteria
+  const sortExpenses = (expenses: Expense[], sortField: string, sortDirection: string): Expense[] => {
+    if (!expenses || expenses.length === 0) return [];
+    
+    // Create a copy to avoid mutating the original array
+    const expensesCopy = [...expenses];
+    
+    return expensesCopy.sort((a, b) => {
+      // Determine sort direction multiplier
+      const multiplier = sortDirection === 'asc' ? 1 : -1;
+      
+      // Sort based on field
+      switch (sortField) {
+        case 'amount':
+          return (a.amount - b.amount) * multiplier;
+        
+        case 'date':
+          return (new Date(a.date).getTime() - new Date(b.date).getTime()) * multiplier;
+        
+        case 'description':
+          // Case-insensitive string comparison
+          const descA = a.description?.toLowerCase() || '';
+          const descB = b.description?.toLowerCase() || '';
+          if (descA < descB) return -1 * multiplier;
+          if (descA > descB) return 1 * multiplier;
+          return 0;
+        
+        default:
+          // Default to date sorting
+          return (new Date(a.date).getTime() - new Date(b.date).getTime()) * multiplier;
+      }
+    });
   };
   
   const clearFilters = () => {
@@ -421,22 +480,27 @@ export default function ExpensesPage() {
             <div className="flex space-x-2">
               <Button
                 variant="outline"
-                className="border-gray-300 hover:bg-gray-50 transition-colors duration-200"
+                className="border-gray-300 hover:bg-gray-50 transition-colors duration-200 flex items-center"
                 onClick={() => {
                   setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
                 }}
+                title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
               >
-                {sortOrder === 'asc' ? '↑' : '↓'}
+                {sortOrder === 'asc' ? 
+                  <ArrowUp className="h-4 w-4" /> : 
+                  <ArrowDown className="h-4 w-4" />
+                }
               </Button>
               
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
                 className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 hover:border-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md transition-all duration-200"
+                title="Sort by field"
               >
-                <option value="date">Date</option>
-                <option value="amount">Amount</option>
-                <option value="description">Description</option>
+                <option value="date">Sort by Date</option>
+                <option value="amount">Sort by Amount</option>
+                <option value="description">Sort by Description</option>
               </select>
             </div>
           </div>
@@ -604,6 +668,13 @@ export default function ExpensesPage() {
                   </span>
                 )}
                 
+                {sortBy && (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    Sort: {sortBy === 'date' ? 'Date' : sortBy === 'amount' ? 'Amount' : 'Description'} 
+                    {sortOrder === 'asc' ? ' (Ascending)' : ' (Descending)'}
+                  </span>
+                )}
+                
                 {!searchQuery && !selectedCategory && !startDate && !endDate && minAmount === null && maxAmount === null && (
                   <span className="text-xs text-gray-500">No active filters</span>
                 )}
@@ -695,17 +766,65 @@ export default function ExpensesPage() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th 
+                    scope="col" 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    onClick={() => {
+                      if (sortBy === 'description') {
+                        setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                      } else {
+                        setSortBy('description');
+                        setSortOrder('asc');
+                      }
+                    }}
+                  >
                     Description
+                    {sortBy === 'description' && (
+                      <span className="ml-1">
+                        {sortOrder === 'asc' ? '↑' : '↓'}
+                      </span>
+                    )}
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Category
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th 
+                    scope="col" 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    onClick={() => {
+                      if (sortBy === 'date') {
+                        setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                      } else {
+                        setSortBy('date');
+                        setSortOrder('desc');
+                      }
+                    }}
+                  >
                     Date
+                    {sortBy === 'date' && (
+                      <span className="ml-1">
+                        {sortOrder === 'asc' ? '↑' : '↓'}
+                      </span>
+                    )}
                   </th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th 
+                    scope="col" 
+                    className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    onClick={() => {
+                      if (sortBy === 'amount') {
+                        setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                      } else {
+                        setSortBy('amount');
+                        setSortOrder('desc');
+                      }
+                    }}
+                  >
                     Amount
+                    {sortBy === 'amount' && (
+                      <span className="ml-1">
+                        {sortOrder === 'asc' ? '↑' : '↓'}
+                      </span>
+                    )}
                   </th>
                   <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
