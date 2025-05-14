@@ -314,51 +314,71 @@ export default function DashboardPage() {
       if (Array.isArray(fetchedCategories)) {
         setCategories(fetchedCategories);
         
-        // Use category data from annual summary if available
-        if (annualData.category_data && annualData.category_data.length > 0) {
-          // Map the annual category data to our format
-          const categoriesWithSpending = fetchedCategories.map((category: any) => {
-            const categoryData = annualData.category_data.find((item: any) => 
-              item.name === category.name
+        // Calculate spending per category using both actual expenses and annual data
+        const categoriesWithSpending = fetchedCategories.map((category: Category) => {
+          // Get spending data from monthly expenses first (most accurate)
+          const spentFromExpenses = monthlyExpenses
+            .filter(expense => expense.category_id === category.id)
+            .reduce((total, expense) => {
+              // Convert expense amount to preferred currency if needed
+              const convertedAmount = convertAmount(expense.amount, expense.currency);
+              return total + convertedAmount;
+            }, 0);
+          
+          // Fallback to annual summary data if available
+          let spentFromAnnualData = 0;
+          if (monthlyData && monthlyData.category_breakdown) {
+            // Look for category by ID in the annual data's category breakdown
+            const categoryData = monthlyData.category_breakdown.find((item: any) => 
+              item.category_id === category.id
             );
+            
+            if (categoryData) {
+              spentFromAnnualData = categoryData.amount || 0;
+            }
+          }
+          
+          // Use expense data if available, otherwise use annual data
+          const spent = monthlyExpenses.length > 0 ? spentFromExpenses : spentFromAnnualData;
+          
+          return {
+            ...category,
+            spent: spent
+          };
+        });
+        
+        // Calculate total monthly spending
+        const monthlyTotal = totalExpenses || 
+          categoriesWithSpending.reduce((sum, cat) => sum + (cat.spent || 0), 0);
+        
+        // Find the category with the highest spending
+        const topCategory = categoriesWithSpending.reduce((top: any, current: any) => 
+          current.spent > top.spent ? current : top, 
+          { name: 'None', spent: 0 }
+        );
+        
+        setTopSpendingCategory(topCategory);
+        
+        // Calculate totals by category for charts, including percentage of monthly total
+        const catTotals = categoriesWithSpending
+          .filter((cat: any) => cat.spent > 0)
+          .map((category: any) => {
+            const percentage = monthlyTotal > 0 
+              ? Number((category.spent / monthlyTotal * 100).toFixed(1)) 
+              : 0;
+            
             return {
-              ...category,
-              spent: categoryData ? categoryData.amount : 0
+              id: category.id,
+              name: category.name,
+              color: category.color,
+              total: category.spent,
+              percentage: percentage,
+              count: monthlyExpenses.filter(exp => exp.category_id === category.id).length
             };
-          });
-          
-          // Find the category with the highest spending
-          const topCategory = categoriesWithSpending.reduce((top: any, current: any) => 
-            current.spent > top.spent ? current : top, 
-            { name: 'None', spent: 0 }
-          );
-          
-          setTopSpendingCategory(topCategory);
-          
-          // Calculate totals by category for charts
-          const catTotals = categoriesWithSpending
-            .filter((cat: any) => cat.spent > 0)
-            .map((category: any) => {
-              const percentage = annualData.total_amount > 0 
-                ? Number((category.spent / annualData.total_amount * 100).toFixed(1)) 
-                : 0;
-              
-              return {
-                id: category.id,
-                name: category.name,
-                color: category.color,
-                total: category.spent,
-                percentage: percentage,
-                count: 0 // We don't have this from annual data
-              };
-            })
-            .sort((a: any, b: any) => b.total - a.total);
-          
-          setCategoryTotals(catTotals);
-        } else {
-          // No category data from annual summary
-          setCategoryTotals([]);
-        }
+          })
+          .sort((a: any, b: any) => b.total - a.total);
+        
+        setCategoryTotals(catTotals);
       } else {
         setCategories([]);
         setCategoryTotals([]);
@@ -745,7 +765,7 @@ export default function DashboardPage() {
               <div className="flex justify-center items-center h-48 p-6">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
               </div>
-            ) : (!categories || categories.length === 0 || !categories.some(cat => (cat.spent || 0) > 0)) ? (
+            ) : (!categoryTotals || categoryTotals.length === 0) ? (
               <div className="p-6 text-center">
                 <div className="py-10">
                   <div className="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
@@ -770,99 +790,105 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="divide-y divide-gray-200">
-                {categories
-                  .filter(cat => cat.spent && cat.spent > 0)
-                  .sort((a, b) => (b.spent || 0) - (a.spent || 0))
-                  .slice(0, 5)
-                  .map((category) => {
-                    try {
-                      // Safely access budgets with null checks
-                      const budgetItem = Array.isArray(budgets) ? 
-                        budgets.find(b => b && b.category_id === category.id) : 
-                        undefined;
-                      
-                      // Safely convert amount with null checks
-                      const budgetAmount = budgetItem && budgetItem.amount && budgetItem.currency ? 
-                        convertAmount(budgetItem.amount, budgetItem.currency) : 
-                        0;
-                      
-                      const spent = category.spent || 0;
-                      const percentage = budgetAmount > 0 
-                        ? Math.min(Math.round((spent / budgetAmount) * 100), 100) 
-                        : 0;
-                      
-                      return (
-                        <div 
-                          key={category.id} 
-                          className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
-                          onClick={() => router.push(`/categories/${category.id}`)}
-                        >
-                          <div className="flex justify-between items-center mb-2">
-                            <div className="flex items-center">
-                              <div 
-                                className="w-3 h-3 rounded-full mr-2"
-                                style={{ backgroundColor: category.color || '#CCCCCC' }}
-                              />
-                              <span className="font-medium text-gray-800">
-                                {category.name || 'Unknown Category'}
-                              </span>
-                            </div>
+                {categoryTotals.slice(0, 5).map((category) => {
+                  try {
+                    // Safely access budgets with null checks
+                    const budgetItem = Array.isArray(budgets) ? 
+                      budgets.find(b => b && b.category_id === category.id) : 
+                      undefined;
+                    
+                    // Safely convert amount with null checks
+                    const budgetAmount = budgetItem && budgetItem.amount && budgetItem.currency ? 
+                      convertAmount(budgetItem.amount, budgetItem.currency) : 
+                      0;
+                    
+                    const spent = category.total || 0;
+                    const percentage = budgetAmount > 0 
+                      ? Math.min(Math.round((spent / budgetAmount) * 100), 100) 
+                      : 0;
+                    
+                    return (
+                      <div 
+                        key={category.id} 
+                        className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                        onClick={() => router.push(`/categories/${category.id}`)}
+                      >
+                        <div className="flex justify-between items-center mb-2">
+                          <div className="flex items-center">
+                            <div 
+                              className="w-3 h-3 rounded-full mr-2"
+                              style={{ backgroundColor: category.color || '#CCCCCC' }}
+                            />
+                            <span className="font-medium text-gray-800">
+                              {category.name || 'Unknown Category'}
+                              {category.count > 0 && (
+                                <span className="ml-2 text-xs text-gray-500">
+                                  ({category.count} {category.count === 1 ? 'expense' : 'expenses'})
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                          <div className="text-right">
                             <span className="text-gray-700 font-medium">
                               {formatAmount(spent)}
                             </span>
-                          </div>
-                          
-                          {budgetAmount > 0 && (
-                            <div>
-                              <div className="flex justify-between text-xs text-gray-500 mb-1">
-                                <span>Budget: {formatAmount(budgetAmount)}</span>
-                                <span 
-                                  className={
-                                    percentage >= 100 ? 'text-red-600 font-medium' : 
-                                    percentage >= 85 ? 'text-amber-600 font-medium' : 
-                                    'text-gray-500'
-                                  }
-                                >
-                                  {percentage}%
-                                </span>
-                              </div>
-                              <div className="w-full bg-gray-200 rounded-full h-1.5">
-                                <div 
-                                  className={`h-1.5 rounded-full ${
-                                    percentage >= 100 ? 'bg-red-500' : 
-                                    percentage >= 85 ? 'bg-amber-500' : 
-                                    'bg-blue-500'
-                                  }`} 
-                                  style={{ width: `${percentage}%` }}
-                                />
-                              </div>
+                            <div className="text-xs text-gray-500">
+                              {category.percentage}% of total
                             </div>
-                          )}
+                          </div>
                         </div>
-                      );
-                    } catch (error) {
-                      console.error('Error rendering category:', error, category);
-                      // Provide a fallback UI for the category to avoid breaking the entire list
-                      return (
-                        <div 
-                          key={category.id || 'fallback-key'} 
-                          className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
-                        >
-                          <div className="flex justify-between items-center mb-2">
-                            <div className="flex items-center">
-                              <div className="w-3 h-3 rounded-full mr-2 bg-gray-400" />
-                              <span className="font-medium text-gray-800">
-                                {category.name || 'Category Error'}
+                        
+                        {budgetAmount > 0 && (
+                          <div>
+                            <div className="flex justify-between text-xs text-gray-500 mb-1">
+                              <span>Budget: {formatAmount(budgetAmount)}</span>
+                              <span 
+                                className={
+                                  percentage >= 100 ? 'text-red-600 font-medium' : 
+                                  percentage >= 85 ? 'text-amber-600 font-medium' : 
+                                  'text-gray-500'
+                                }
+                              >
+                                {percentage}%
                               </span>
                             </div>
-                            <span className="text-gray-700 font-medium">
-                              {formatAmount(category.spent || 0)}
+                            <div className="w-full bg-gray-200 rounded-full h-1.5">
+                              <div 
+                                className={`h-1.5 rounded-full ${
+                                  percentage >= 100 ? 'bg-red-500' : 
+                                  percentage >= 85 ? 'bg-amber-500' : 
+                                  'bg-blue-500'
+                                }`} 
+                                style={{ width: `${percentage}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  } catch (error) {
+                    console.error('Error rendering category:', error, category);
+                    // Provide a fallback UI for the category to avoid breaking the entire list
+                    return (
+                      <div 
+                        key={category.id || 'fallback-key'} 
+                        className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                      >
+                        <div className="flex justify-between items-center mb-2">
+                          <div className="flex items-center">
+                            <div className="w-3 h-3 rounded-full mr-2 bg-gray-400" />
+                            <span className="font-medium text-gray-800">
+                              {category.name || 'Category Error'}
                             </span>
                           </div>
+                          <span className="text-gray-700 font-medium">
+                            {formatAmount(category.total || 0)}
+                          </span>
                         </div>
-                      );
-                    }
-                  })}
+                      </div>
+                    );
+                  }
+                })}
               </div>
             )}
           </Card>
