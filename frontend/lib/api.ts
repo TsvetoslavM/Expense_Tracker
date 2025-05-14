@@ -180,29 +180,7 @@ export const expenseAPI = {
     limit?: number
   }) => {
     try {
-      // Validate dates before sending request
-      if (params?.start_date || params?.end_date) {
-        const now = new Date();
-        const currentYear = now.getFullYear();
-        const currentMonth = now.getMonth() + 1;
-        const currentDay = now.getDate();
-        
-        // Format current date as YYYY-MM-DD for comparison
-        const currentDateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`;
-        
-        // Check if start_date is in the future
-        if (params.start_date && params.start_date > currentDateStr) {
-          console.warn(`Requested start_date ${params.start_date} is in the future. Adjusting to current date.`);
-          params.start_date = currentDateStr;
-        }
-        
-        // Check if end_date is in the future
-        if (params.end_date && params.end_date > currentDateStr) {
-          console.warn(`Requested end_date ${params.end_date} is in the future. Adjusting to current date.`);
-          params.end_date = currentDateStr;
-        }
-      }
-      
+      // No need to validate dates against a fixed date - use actual current date
       // Build query string from params
       let queryParams = '';
       if (params) {
@@ -215,24 +193,19 @@ export const expenseAPI = {
         }
       }
       
+      console.log(`Fetching expenses with params:`, params);
+      
       const response = await api.get('/api/expenses', { 
         params: params 
       });
+      
+      console.log(`Fetched ${response.data?.length || 0} expenses successfully`);
       
       // Axios doesn't have an 'ok' property like fetch
       // For Axios, status codes in 200 range indicate success
       return response.data;
     } catch (error: any) {
       console.error('Error in getAllExpenses:', error);
-      
-      // Check if it's an Axios error with a response
-      if (error.response) {
-        // For 422 errors, return empty array instead of throwing
-        if (error.response.status === 422) {
-          console.warn('Server rejected request with 422 status. Invalid parameters, possibly future dates.');
-          return [];
-        }
-      }
       
       // Return empty array instead of throwing to avoid breaking the UI
       return [];
