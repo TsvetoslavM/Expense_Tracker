@@ -109,6 +109,11 @@ def check_pydantic_compatibility():
 def check_database_access():
     """
     Check if SQLite database can be created and accessed.
+    Returns:
+        - 0: Success - Database created and operations succeed
+        - 1: Connection error - Cannot create/connect to database 
+        - 2: Query error - Connection works but operations fail
+        - 3: Unexpected error occurred
     """
     try:
         import sqlite3
@@ -119,12 +124,53 @@ def check_database_access():
         
         try:
             # Try to connect to the database
-            conn = sqlite3.connect(path)
-            conn.execute("CREATE TABLE test (id INTEGER PRIMARY KEY, name TEXT)")
-            conn.execute("INSERT INTO test (name) VALUES (?)", ("test",))
-            conn.commit()
-            conn.close()
-            return True
+            try:
+                conn = sqlite3.connect(path)
+            except sqlite3.Error:
+                print("ERROR: Failed to connect to SQLite database.")
+                return 1
+                
+            try:
+                # Test schema creation
+                conn.execute("CREATE TABLE test (id INTEGER PRIMARY KEY, name TEXT)")
+                
+                # Test data insertion
+                conn.execute("INSERT INTO test (name) VALUES (?)", ("test",))
+                
+                # Test data retrieval
+                cursor = conn.execute("SELECT id, name FROM test")
+                row = cursor.fetchone()
+                if not row or row[1] != "test":
+                    print("ERROR: Data verification failed in SQLite test.")
+                    conn.close()
+                    return 2
+                    
+                # Test transaction support
+                conn.rollback()  # This should remove our inserted row
+                cursor = conn.execute("SELECT COUNT(*) FROM test")
+                count = cursor.fetchone()[0]
+                if count > 0:
+                    print("WARNING: Transaction rollback did not work as expected.")
+                
+                # Test successful commit
+                conn.execute("INSERT INTO test (name) VALUES (?)", ("committed",))
+                conn.commit()
+                
+                # Verify commit worked
+                cursor = conn.execute("SELECT name FROM test WHERE name=?", ("committed",))
+                row = cursor.fetchone()
+                if not row or row[0] != "committed":
+                    print("ERROR: Database commit operation failed.")
+                    conn.close()
+                    return 2
+                
+                conn.close()
+                print("SUCCESS: Database connection and operations verified successfully.")
+                return 0
+            except sqlite3.Error as query_error:
+                print(f"ERROR: Database query failed: {query_error}")
+                conn.close()
+                return 2
         finally:
             # Clean up the temporary file
             try:
@@ -134,10 +180,10 @@ def check_database_access():
     except sqlite3.Error as e:
         print(f"ERROR: SQLite database access error: {e}")
         print("Make sure your Python installation supports SQLite.")
-        return False
+        return 1
     except Exception as e:
         print(f"ERROR: Unexpected error during database check: {e}")
-        return False
+        return 3
 
 def run_tests():
     """
@@ -152,7 +198,15 @@ def run_tests():
         return 1
     
     # Check database access
-    if not check_database_access():
+    db_status = check_database_access()
+    if db_status != 0:
+        print(f"Database check failed with status code: {db_status}")
+        if db_status == 1:
+            print("ERROR: Cannot create or connect to the database. Please check your SQLite installation.")
+        elif db_status == 2:
+            print("ERROR: Database queries failed. The database connection works but operations are failing.")
+        elif db_status == 3:
+            print("ERROR: An unexpected error occurred during database tests.")
         return 1
     
     # Get the directory of this script
