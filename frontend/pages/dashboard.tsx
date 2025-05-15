@@ -929,38 +929,6 @@ export default function DashboardPage() {
                             </div>
                           </div>
                         )}
-                        
-                        {/* Display month-over-month change if available */}
-                        {category.previousMonthTotal !== undefined && (
-                          <div className="mt-2 pt-2 border-t border-gray-100">
-                            <div className="flex justify-between items-center text-xs">
-                              <span className="text-gray-500">vs Previous Month:</span>
-                              {category.previousMonthTotal > 0 ? (
-                                <span className={
-                                  spent > category.previousMonthTotal ? 'text-red-600' : 
-                                  spent < category.previousMonthTotal ? 'text-green-600' : 
-                                  'text-gray-500'
-                                }>
-                                  {spent > category.previousMonthTotal ? (
-                                    <>
-                                      <ArrowUpRight className="inline h-3 w-3 mr-0.5" />
-                                      {Math.abs(((spent - category.previousMonthTotal) / category.previousMonthTotal) * 100).toFixed(0)}%
-                                    </>
-                                  ) : spent < category.previousMonthTotal ? (
-                                    <>
-                                      <ArrowDownRight className="inline h-3 w-3 mr-0.5" />
-                                      {Math.abs(((category.previousMonthTotal - spent) / category.previousMonthTotal) * 100).toFixed(0)}%
-                                    </>
-                                  ) : (
-                                    'No change'
-                                  )}
-                                </span>
-                              ) : (
-                                <span className="text-gray-500">New this month</span>
-                              )}
-                            </div>
-                          </div>
-                        )}
                       </div>
                     );
                   } catch (error) {
