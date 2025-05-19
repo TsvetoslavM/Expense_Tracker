@@ -113,14 +113,10 @@ export default function DashboardPage() {
   // State for date filtering
   const [selectedYear, setSelectedYear] = useState<number>(() => {
     const clientDate = new Date();
-    const clientYear = clientDate.getFullYear();
-    
-    // If client year seems unreasonable, use fallback
-    return (clientYear < 2020 || clientYear > 2025) ? 2025 : clientYear;
+    return clientDate.getFullYear();
   });
   
   const [selectedMonth, setSelectedMonth] = useState<number>(() => {
-    // Always use client month as it's likely correct even if year is wrong
     return new Date().getMonth() + 1;
   });
   
@@ -143,6 +139,9 @@ export default function DashboardPage() {
   // Add state for debug panel visibility near the other state variables
   const [showDebugPanel, setShowDebugPanel] = useState(false);
   
+  // Add state for currency initialization
+  const [isCurrencyInitialized, setIsCurrencyInitialized] = useState(false)
+  
   // Function to get the actual current date (not relying solely on client system date)
   const getActualCurrentDate = () => {
     // Get the actual current date from the client system
@@ -163,6 +162,10 @@ export default function DashboardPage() {
     setCategoryTotals([]);
     setMonthlyExpenses([]);
     setTopSpendingCategory({ name: 'None', spent: 0 });
+    setTotalExpenses(0);
+    setPreviousMonthTotal(0);
+    setMonthlyChange(0);
+    setMonthlyChangePercent(0);
     
     // Set loading state
     setLoading(true);
@@ -222,6 +225,29 @@ export default function DashboardPage() {
     return new Date(2000, month - 1, 1).toLocaleString('default', { month: 'long' })
   }
   
+  // Add useEffect for currency initialization
+  useEffect(() => {
+    if (!authLoading && user && !isCurrencyInitialized) {
+      setIsCurrencyInitialized(true)
+      fetchDashboardData()
+    }
+  }, [authLoading, user, isCurrencyInitialized])
+
+  // Add useEffect for route change
+  useEffect(() => {
+    const handleRouteChange = () => {
+      if (!authLoading && user) {
+        fetchDashboardData()
+      }
+    }
+
+    router.events.on('routeChangeComplete', handleRouteChange)
+    return () => {
+      router.events.off('routeChangeComplete', handleRouteChange)
+    }
+  }, [router, authLoading, user])
+
+  // Update the existing useEffect for data fetching
   useEffect(() => {
     // If user is not authenticated, redirect to login
     if (!authLoading && !user) {
@@ -229,14 +255,27 @@ export default function DashboardPage() {
       return
     }
 
-    if (user) {
+    if (user && isCurrencyInitialized) {
       // Set loading true when date range changes
       setLoading(true);
       // Fetch data when user is available or when date range changes
       fetchDashboardData()
-      
     }
-  }, [user, authLoading, selectedYear, selectedMonth])
+  }, [user, authLoading, selectedYear, selectedMonth, isCurrencyInitialized])
+  
+  // Add new useEffect for page visibility changes
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && !authLoading && user) {
+        fetchDashboardData();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [authLoading, user]);
   
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -261,11 +300,9 @@ export default function DashboardPage() {
       console.log('Monthly data found:', { monthlyData, month: selectedMonth });
       
       // Find previous month data - declare at the top level of the function
-      // so it's available to all code blocks below
       let prevMonthData = null;
       
       // Get expense data BEFORE calculating category spending
-      // to ensure it's available for the category calculations
       let expenses = [];
       try {
         // Calculate first and last day of the selected month
@@ -286,6 +323,20 @@ export default function DashboardPage() {
         setMonthlyExpenses(expenses || []);
         console.log(`Found ${expenses?.length || 0} expenses for ${selectedMonth}/${selectedYear}`);
         
+        // Calculate total expenses with currency conversion
+        const totalExpensesAmount = expenses.reduce((total: number, expense: Expense) => {
+          // Ensure we have the expense currency before conversion
+          if (!expense.currency) {
+            console.warn('Expense missing currency:', expense);
+            return total;
+          }
+          const convertedAmount = convertAmount(expense.amount, expense.currency);
+          return total + convertedAmount;
+        }, 0);
+        
+        // Set total expenses with converted amount
+        setTotalExpenses(totalExpensesAmount);
+        
         // Get the 5 most recent expenses
         const recent = expenses && expenses.length > 0 
           ? [...expenses].sort((a, b) => 
@@ -302,9 +353,6 @@ export default function DashboardPage() {
       }
       
       if (monthlyData) {
-        // Set the total expenses from the monthly data
-        setTotalExpenses(monthlyData.amount || 0);
-        
         // Find previous month data
         const prevMonth = selectedMonth === 1 ? 12 : selectedMonth - 1;
         const prevYear = selectedMonth === 1 ? selectedYear - 1 : selectedYear;
@@ -326,12 +374,39 @@ export default function DashboardPage() {
           prevMonthData = annualData.monthly_data.find((item: any) => item.month === prevMonth);
         }
         
-        // Set previous month total and calculate change
-        const prevTotal = prevMonthData ? prevMonthData.amount : 0;
+        // Calculate previous month's total from expenses
+        let prevMonthExpenses = [];
+        try {
+          const prevDaysInMonth = new Date(prevYear, prevMonth, 0).getDate();
+          const prevStartDate = `${prevYear}-${String(prevMonth).padStart(2, '0')}-01`;
+          const prevEndDate = `${prevYear}-${String(prevMonth).padStart(2, '0')}-${String(prevDaysInMonth).padStart(2, '0')}`;
+          
+          prevMonthExpenses = await expenseAPI.getAllExpenses({
+            skip: 0,
+            limit: 100,
+            start_date: prevStartDate,
+            end_date: prevEndDate
+          });
+        } catch (err) {
+          console.error('Error fetching previous month expenses:', err);
+          prevMonthExpenses = [];
+        }
+        
+        // Calculate previous month total with currency conversion
+        const prevTotal = prevMonthExpenses.reduce((total: number, expense: Expense) => {
+          if (!expense.currency) {
+            console.warn('Previous month expense missing currency:', expense);
+            return total;
+          }
+          const convertedAmount = convertAmount(expense.amount, expense.currency);
+          return total + convertedAmount;
+        }, 0);
+        
         setPreviousMonthTotal(prevTotal);
         
         // Calculate monthly change for the comparison indicator
-        const change = monthlyData.amount - prevTotal;
+        // The difference should be current month minus previous month
+        const change = totalExpenses - prevTotal;
         setMonthlyChange(change);
         
         // Calculate percentage change
@@ -339,8 +414,16 @@ export default function DashboardPage() {
           const changePercent = (change / prevTotal) * 100;
           setMonthlyChangePercent(changePercent);
         } else {
-          setMonthlyChangePercent(monthlyData.amount > 0 ? 100 : 0);
+          setMonthlyChangePercent(totalExpenses > 0 ? 100 : 0);
         }
+
+        console.log('Monthly comparison:', {
+          currentMonth: totalExpenses,
+          previousMonth: prevTotal,
+          difference: change,
+          month: selectedMonth,
+          year: selectedYear
+        });
       } else {
         // No data for selected month
         setTotalExpenses(0);
@@ -358,9 +441,14 @@ export default function DashboardPage() {
         // Process categories with spending data and month-over-month comparisons
         const categoriesWithSpending = fetchedCategories.map((category: Category) => {
           // Get spending data from monthly expenses first (most accurate)
-          const spentFromExpenses = expenses  // Use the expenses variable from above
+          const spentFromExpenses = expenses
             .filter((expense: Expense) => expense.category_id === category.id)
             .reduce((total: number, expense: Expense) => {
+              // Ensure we have the expense currency before conversion
+              if (!expense.currency) {
+                console.warn('Expense missing currency:', expense);
+                return total;
+              }
               // Convert expense amount to preferred currency if needed
               const convertedAmount = convertAmount(expense.amount, expense.currency);
               return total + convertedAmount;
@@ -649,20 +737,18 @@ export default function DashboardPage() {
           description={
             <div className="flex flex-col">
               <div className="flex items-center text-sm">
-                <span className={monthlyChange < 0 ? 'text-green-600' : monthlyChange > 0 ? 'text-red-600' : 'text-gray-600'}>
-                  {monthlyChange === 0 ? (
-                    'No change'
-                  ) : monthlyChange < 0 ? (
-                    <><ArrowDownRight className="inline h-3.5 w-3.5 mr-1" />{Math.abs(monthlyChangePercent || 0).toFixed(1)}%</>
-                  ) : (
-                    <><ArrowUpRight className="inline h-3.5 w-3.5 mr-1" />{Math.abs(monthlyChangePercent || 0).toFixed(1)}%</>
-                  )}
+                <span className={totalExpenses > previousMonthTotal ? 'text-red-600' : totalExpenses < previousMonthTotal ? 'text-green-600' : 'text-gray-600'}>
+                  <>
+                    {totalExpenses > previousMonthTotal ? (
+                      <ArrowUpRight className="inline h-3.5 w-3.5 mr-1" />
+                    ) : (
+                      <ArrowDownRight className="inline h-3.5 w-3.5 mr-1" />
+                    )}
+                    {formatAmount(Math.abs(totalExpenses - previousMonthTotal))}
+                  </>
                 </span>
-                <span className="text-gray-500 ml-1">vs {selectedMonth === 1 ? 'Dec' : getMonthName(selectedMonth - 1).substring(0, 3)}</span>
+                <span className="text-gray-500 ml-1">vs {getMonthName(selectedMonth === 1 ? 12 : selectedMonth - 1)} {selectedMonth === 1 ? selectedYear - 1 : selectedYear} ({formatAmount(previousMonthTotal)})</span>
               </div>
-              {previousMonthTotal === 0 && monthlyChange > 0 && (
-                <span className="text-xs text-gray-500 mt-0.5">No data for previous month</span>
-              )}
             </div>
           }
           icon={<Wallet className="h-4 w-4" />}
