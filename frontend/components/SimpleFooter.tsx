@@ -121,7 +121,7 @@ export default function SimpleFooter() {
         
         <div className="mt-12 pt-8 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-gray-500">
-            &copy; {currentYear} Expense Tracker. All rights reserved.
+            &copy; {currentYear} Expense Tracker. Created by Tsvetoslav Makaveev. All rights reserved.
           </p>
           <div className="mt-4 md:mt-0 flex space-x-6">
             <Link href="/" className="text-xs text-gray-500 hover:text-indigo-600">

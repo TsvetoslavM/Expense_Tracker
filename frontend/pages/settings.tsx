@@ -22,7 +22,8 @@ import {
   Trash2,
   Smartphone,
   Eye,
-  EyeOff
+  EyeOff,
+  Settings2
 } from 'lucide-react'
 import PageContainer from '@/components/layout/PageContainer'
 
@@ -220,16 +221,22 @@ export default function SettingsPage() {
   return (
     <PageContainer>
       <div className="mb-8">
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl shadow-lg p-8 text-white">
-          <h1 className="text-3xl font-bold mb-2">Account Settings</h1>
-          <p className="text-purple-100 max-w-3xl">
-            Manage your profile, security, and preferences to personalize your experience.
-          </p>
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl shadow-lg p-8 text-white relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
+          <div className="relative z-10">
+            <h1 className="text-3xl font-bold mb-2 flex items-center">
+              <Settings2 className="h-8 w-8 mr-3" />
+              Account Settings
+            </h1>
+            <p className="text-purple-100 max-w-3xl">
+              Manage your profile, security, and preferences to personalize your experience.
+            </p>
+          </div>
         </div>
       </div>
       
       {updateSuccess && (
-        <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-md flex items-center">
+        <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-md flex items-center animate-fade-in">
           <div className="flex-shrink-0 mr-3">
             <Check className="h-5 w-5 text-green-500" />
           </div>
@@ -240,7 +247,7 @@ export default function SettingsPage() {
       )}
       
       {updateError && (
-        <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-md flex items-center">
+        <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-md flex items-center animate-fade-in">
           <div className="flex-shrink-0 mr-3">
             <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
@@ -253,25 +260,21 @@ export default function SettingsPage() {
       )}
       
       <Tabs defaultValue="profile" className="space-y-6" onValueChange={setActiveTab}>
-        <Card>
-          <TabsList className="w-full grid grid-cols-3 h-14 rounded-b-none bg-muted/50">
-            <TabsTrigger value="profile" className="flex items-center gap-2 text-sm">
-              <User className="h-4 w-4" />
+        <Card className="border-none shadow-lg">
+          <TabsList className="w-full grid grid-cols-2 h-16 rounded-b-none bg-gradient-to-r from-purple-50 to-indigo-50">
+            <TabsTrigger value="profile" className="flex items-center gap-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-200">
+              <User className="h-5 w-5" />
               <span>Profile</span>
             </TabsTrigger>
-            <TabsTrigger value="security" className="flex items-center gap-2 text-sm">
-              <ShieldCheck className="h-4 w-4" />
+            <TabsTrigger value="security" className="flex items-center gap-2 text-sm data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-200">
+              <ShieldCheck className="h-5 w-5" />
               <span>Security</span>
-            </TabsTrigger>
-            <TabsTrigger value="notifications" className="flex items-center gap-2 text-sm">
-              <Bell className="h-4 w-4" />
-              <span>Notifications</span>
             </TabsTrigger>
           </TabsList>
         </Card>
         
         <TabsContent value="profile" className="space-y-4">
-          <Card>
+          <Card className="border-none shadow-lg hover:shadow-xl transition-shadow duration-200">
             <div className="p-6">
               <form onSubmit={handleProfileSubmit(onProfileSubmit)}>
                 <div className="space-y-4">
@@ -282,34 +285,34 @@ export default function SettingsPage() {
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="first_name">First Name</Label>
+                      <Label htmlFor="first_name" className="text-sm font-medium">First Name</Label>
                       <Input
                         id="first_name"
                         placeholder="John"
                         {...registerProfile('first_name')}
-                        className={profileErrors.first_name ? 'border-red-500' : ''}
+                        className={`${profileErrors.first_name ? 'border-red-500' : ''} transition-colors duration-200`}
                       />
                       {profileErrors.first_name && (
-                        <p className="text-sm text-red-500">{profileErrors.first_name.message}</p>
+                        <p className="text-sm text-red-500 animate-fade-in">{profileErrors.first_name.message}</p>
                       )}
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="last_name">Last Name</Label>
+                      <Label htmlFor="last_name" className="text-sm font-medium">Last Name</Label>
                       <Input
                         id="last_name"
                         placeholder="Doe"
                         {...registerProfile('last_name')}
-                        className={profileErrors.last_name ? 'border-red-500' : ''}
+                        className={`${profileErrors.last_name ? 'border-red-500' : ''} transition-colors duration-200`}
                       />
                       {profileErrors.last_name && (
-                        <p className="text-sm text-red-500">{profileErrors.last_name.message}</p>
+                        <p className="text-sm text-red-500 animate-fade-in">{profileErrors.last_name.message}</p>
                       )}
                     </div>
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="flex items-center">
+                    <Label htmlFor="email" className="flex items-center text-sm font-medium">
                       <Mail className="h-4 w-4 mr-1.5 text-indigo-500" />
                       Email Address
                     </Label>
@@ -318,10 +321,10 @@ export default function SettingsPage() {
                       type="email"
                       placeholder="john.doe@example.com"
                       {...registerProfile('email')}
-                      className={profileErrors.email ? 'border-red-500' : ''}
+                      className={`${profileErrors.email ? 'border-red-500' : ''} transition-colors duration-200`}
                     />
                     {profileErrors.email && (
-                      <p className="text-sm text-red-500">{profileErrors.email.message}</p>
+                      <p className="text-sm text-red-500 animate-fade-in">{profileErrors.email.message}</p>
                     )}
                   </div>
                   
@@ -332,11 +335,11 @@ export default function SettingsPage() {
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="currency">Default Currency</Label>
+                      <Label htmlFor="currency" className="text-sm font-medium">Default Currency</Label>
                       <select
                         id="currency"
                         {...registerProfile('currency')}
-                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors duration-200"
                       >
                         {currencies.map((currency) => (
                           <option key={currency.code} value={currency.code}>
@@ -345,16 +348,16 @@ export default function SettingsPage() {
                         ))}
                       </select>
                       {profileErrors.currency && (
-                        <p className="text-sm text-red-500">{profileErrors.currency.message}</p>
+                        <p className="text-sm text-red-500 animate-fade-in">{profileErrors.currency.message}</p>
                       )}
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="language">Language</Label>
+                      <Label htmlFor="language" className="text-sm font-medium">Language</Label>
                       <select
                         id="language"
                         {...registerProfile('language')}
-                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors duration-200"
                       >
                         {languages.map((language) => (
                           <option key={language.code} value={language.code}>
@@ -363,7 +366,7 @@ export default function SettingsPage() {
                         ))}
                       </select>
                       {profileErrors.language && (
-                        <p className="text-sm text-red-500">{profileErrors.language.message}</p>
+                        <p className="text-sm text-red-500 animate-fade-in">{profileErrors.language.message}</p>
                       )}
                     </div>
                   </div>
@@ -371,7 +374,7 @@ export default function SettingsPage() {
                   <div className="pt-4">
                     <Button 
                       type="submit" 
-                      className="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700"
+                      className="w-full md:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all duration-200"
                       disabled={isUpdating}
                     >
                       {isUpdating ? (
@@ -391,7 +394,7 @@ export default function SettingsPage() {
         </TabsContent>
         
         <TabsContent value="security" className="space-y-4">
-          <Card>
+          <Card className="border-none shadow-lg hover:shadow-xl transition-shadow duration-200">
             <div className="p-6">
               <form onSubmit={handlePasswordSubmit(onPasswordSubmit)}>
                 <div className="space-y-4">
@@ -402,18 +405,18 @@ export default function SettingsPage() {
                   
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="current_password">Current Password</Label>
+                      <Label htmlFor="current_password" className="text-sm font-medium">Current Password</Label>
                       <div className="relative">
                         <Input
                           id="current_password"
                           type={showCurrentPassword ? "text" : "password"}
                           placeholder="••••••••"
                           {...registerPassword('current_password')}
-                          className={passwordErrors.current_password ? 'border-red-500 pr-10' : 'pr-10'}
+                          className={`${passwordErrors.current_password ? 'border-red-500' : ''} pr-10 transition-colors duration-200`}
                         />
                         <button
                           type="button"
-                          className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+                          className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 transition-colors duration-200"
                           onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                         >
                           {showCurrentPassword ? (
@@ -424,23 +427,23 @@ export default function SettingsPage() {
                         </button>
                       </div>
                       {passwordErrors.current_password && (
-                        <p className="text-sm text-red-500">{passwordErrors.current_password.message}</p>
+                        <p className="text-sm text-red-500 animate-fade-in">{passwordErrors.current_password.message}</p>
                       )}
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="new_password">New Password</Label>
+                      <Label htmlFor="new_password" className="text-sm font-medium">New Password</Label>
                       <div className="relative">
                         <Input
                           id="new_password"
                           type={showPassword ? "text" : "password"}
                           placeholder="••••••••"
                           {...registerPassword('new_password')}
-                          className={passwordErrors.new_password ? 'border-red-500 pr-10' : 'pr-10'}
+                          className={`${passwordErrors.new_password ? 'border-red-500' : ''} pr-10 transition-colors duration-200`}
                         />
                         <button
                           type="button"
-                          className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+                          className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 transition-colors duration-200"
                           onClick={() => setShowPassword(!showPassword)}
                         >
                           {showPassword ? (
@@ -451,21 +454,21 @@ export default function SettingsPage() {
                         </button>
                       </div>
                       {passwordErrors.new_password && (
-                        <p className="text-sm text-red-500">{passwordErrors.new_password.message}</p>
+                        <p className="text-sm text-red-500 animate-fade-in">{passwordErrors.new_password.message}</p>
                       )}
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="confirm_password">Confirm New Password</Label>
+                      <Label htmlFor="confirm_password" className="text-sm font-medium">Confirm New Password</Label>
                       <Input
                         id="confirm_password"
                         type="password"
                         placeholder="••••••••"
                         {...registerPassword('confirm_password')}
-                        className={passwordErrors.confirm_password ? 'border-red-500' : ''}
+                        className={`${passwordErrors.confirm_password ? 'border-red-500' : ''} transition-colors duration-200`}
                       />
                       {passwordErrors.confirm_password && (
-                        <p className="text-sm text-red-500">{passwordErrors.confirm_password.message}</p>
+                        <p className="text-sm text-red-500 animate-fade-in">{passwordErrors.confirm_password.message}</p>
                       )}
                     </div>
                   </div>
@@ -473,7 +476,7 @@ export default function SettingsPage() {
                   <div className="pt-4">
                     <Button 
                       type="submit" 
-                      className="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700"
+                      className="w-full md:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all duration-200"
                       disabled={isUpdating}
                     >
                       {isUpdating ? (
@@ -491,7 +494,7 @@ export default function SettingsPage() {
             </div>
           </Card>
           
-          <Card>
+          <Card className="border-none shadow-lg hover:shadow-xl transition-shadow duration-200">
             <div className="p-6">
               <h2 className="text-xl font-semibold flex items-center text-red-600 mb-4">
                 <Trash2 className="h-5 w-5 mr-2" />
@@ -505,96 +508,10 @@ export default function SettingsPage() {
               <Button 
                 variant="destructive" 
                 onClick={handleDeleteAccount}
-                className="bg-red-600 hover:bg-red-700"
+                className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-md hover:shadow-lg transition-all duration-200"
               >
                 Delete Account
               </Button>
-            </div>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="notifications" className="space-y-4">
-          <Card>
-            <div className="p-6">
-              <h2 className="text-xl font-semibold flex items-center mb-6">
-                <Bell className="h-5 w-5 mr-2 text-indigo-500" />
-                Notification Settings
-              </h2>
-              
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-base">Email Notifications</Label>
-                    <div className="text-sm text-gray-500">
-                      Receive important updates and summaries via email
-                    </div>
-                  </div>
-                  <Switch
-                    checked={emailNotifications}
-                    onCheckedChange={setEmailNotifications}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <div className="flex items-center">
-                      <Label className="text-base">Push Notifications</Label>
-                      <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                        <Smartphone className="mr-1 h-3 w-3" />
-                        Mobile
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      Get real-time alerts on your device
-                    </div>
-                  </div>
-                  <Switch
-                    checked={pushNotifications}
-                    onCheckedChange={setPushNotifications}
-                  />
-                </div>
-                
-                <div className="pt-4 border-t border-gray-200">
-                  <h3 className="text-lg font-medium mb-4">Notification Types</h3>
-                  
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">Monthly Reports</Label>
-                        <div className="text-sm text-gray-500">
-                          Receive a monthly summary of your spending
-                        </div>
-                      </div>
-                      <Switch
-                        checked={monthlyReports}
-                        onCheckedChange={setMonthlyReports}
-                      />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">Budget Alerts</Label>
-                        <div className="text-sm text-gray-500">
-                          Get notified when you're approaching budget limits
-                        </div>
-                      </div>
-                      <Switch
-                        checked={budgetAlerts}
-                        onCheckedChange={setBudgetAlerts}
-                      />
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="pt-4">
-                  <Button 
-                    type="button" 
-                    className="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700"
-                  >
-                    Save Notification Preferences
-                  </Button>
-                </div>
-              </div>
             </div>
           </Card>
         </TabsContent>
