@@ -74,6 +74,7 @@ def download_csv_report(
 def download_pdf_report(
     year: int = Query(..., description="Year to generate report for"),
     month: Optional[int] = Query(None, description="Month to generate report for (1-12)"),
+    category_id: Optional[int] = Query(None, description="Category ID to filter expenses"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> Any:
@@ -81,7 +82,7 @@ def download_pdf_report(
     Generate and download a PDF report of expenses for a specific year and optional month.
     """
     # Validate month if provided
-    if month and (month < 1 or month > 12):
+    if month is not None and (month < 1 or month > 12):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Month must be between 1 and 12",
@@ -97,8 +98,13 @@ def download_pdf_report(
             )
         )
         
-        if month:
+        # Only apply month filter if a valid month is provided
+        if month is not None and month >= 1 and month <= 12:
             query = query.filter(extract('month', Expense.date) == month)
+            
+        # Add category filter if provided and valid
+        if category_id is not None and category_id > 0:
+            query = query.filter(Expense.category_id == category_id)
         
         # Get expenses with category information
         expenses = query.options(joinedload(Expense.category)).order_by(Expense.date.desc()).all()
@@ -115,20 +121,25 @@ def download_pdf_report(
                 Expense.user_id == current_user.id,
                 extract('year', Expense.date) == year,
             )
-            .group_by(Category.name, Category.color)
         )
         
-        if month:
+        # Only apply month filter to summary if a valid month is provided
+        if month is not None and month >= 1 and month <= 12:
             category_summary = category_summary.filter(extract('month', Expense.date) == month)
+            
+        # Add category filter to summary if provided and valid
+        if category_id is not None and category_id > 0:
+            category_summary = category_summary.filter(Category.id == category_id)
         
-        category_summary = category_summary.all()
+        category_summary = category_summary.group_by(Category.name, Category.color).all()
         
         # Generate PDF content
         pdf_content = generate_pdf(expenses, category_summary, year, month, current_user)
         
         # Return as downloadable file
-        period = f"{year}" if not month else f"{year}_{month:02d}"
-        filename = f"expense_report_{period}.pdf"
+        period = f"{year}" if month is None or month < 1 or month > 12 else f"{year}_{month:02d}"
+        category_suffix = f"_category_{category_id}" if category_id is not None and category_id > 0 else ""
+        filename = f"expense_report_{period}{category_suffix}.pdf"
         
         return StreamingResponse(
             iter([pdf_content]), 

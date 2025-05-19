@@ -13,8 +13,8 @@ import PageContainer from '@/components/layout/PageContainer'
 // Report schema with validation
 const reportSchema = z.object({
   year: z.number().min(2000).max(2100),
-  month: z.number().min(1).max(12).optional(),
-  category_id: z.number().optional(),
+  month: z.string().optional(),
+  category_id: z.number().optional().nullable(),
   report_type: z.enum(['csv', 'pdf']),
 })
 
@@ -52,25 +52,27 @@ export default function ReportsPage() {
     resolver: zodResolver(reportSchema),
     defaultValues: {
       year: new Date().getFullYear(),
-      month: new Date().getMonth() + 1,
+      month: '',
+      category_id: null,
       report_type: 'pdf',
     }
   })
 
   // Helper to generate month options
   const monthOptions = [
-    { value: 1, label: 'January' },
-    { value: 2, label: 'February' },
-    { value: 3, label: 'March' },
-    { value: 4, label: 'April' },
-    { value: 5, label: 'May' },
-    { value: 6, label: 'June' },
-    { value: 7, label: 'July' },
-    { value: 8, label: 'August' },
-    { value: 9, label: 'September' },
-    { value: 10, label: 'October' },
-    { value: 11, label: 'November' },
-    { value: 12, label: 'December' },
+    { value: '', label: 'All Months' },
+    { value: '1', label: 'January' },
+    { value: '2', label: 'February' },
+    { value: '3', label: 'March' },
+    { value: '4', label: 'April' },
+    { value: '5', label: 'May' },
+    { value: '6', label: 'June' },
+    { value: '7', label: 'July' },
+    { value: '8', label: 'August' },
+    { value: '9', label: 'September' },
+    { value: '10', label: 'October' },
+    { value: '11', label: 'November' },
+    { value: '12', label: 'December' },
   ]
 
   // Fetch categories on component mount
@@ -84,7 +86,18 @@ export default function ReportsPage() {
     try {
       setIsLoadingCategories(true)
       console.log('Fetching categories for report page...')
-      const fetchedCategories = await categoryAPI.getAllCategories()
+      
+      // Check if token exists for API authentication
+      const token = localStorage.getItem('accessToken')
+      if (!token) {
+        console.error('No authentication token found')
+        setError('Authentication error: Please log in again')
+        setIsLoadingCategories(false)
+        return
+      }
+      
+      // Use ensureCategories instead of getAllCategories
+      const fetchedCategories = await categoryAPI.ensureCategories()
       
       if (Array.isArray(fetchedCategories) && fetchedCategories.length > 0) {
         console.log(`Loaded ${fetchedCategories.length} categories for report filters`)
@@ -151,8 +164,15 @@ export default function ReportsPage() {
       
       // Prepare query parameters
       const params: any = { year: data.year }
-      if (data.month) params.month = data.month
-      if (data.category_id && data.category_id > 0) params.category_id = data.category_id
+      // Only include month if it's a valid number
+      const monthValue = data.month ? parseInt(data.month, 10) : undefined
+      if (monthValue && monthValue >= 1 && monthValue <= 12) {
+        params.month = monthValue
+      }
+      // Only include category_id if it's a valid number greater than 0
+      if (data.category_id && data.category_id > 0) {
+        params.category_id = data.category_id
+      }
       
       // Get report data using the appropriate API function
       let reportData: Blob
@@ -160,7 +180,9 @@ export default function ReportsPage() {
       if (data.report_type === 'csv') {
         reportData = await reportAPI.getCSVReport(params)
       } else { // pdf
-        reportData = await reportAPI.getPDFReport(data.year, data.month)
+        // Pass all parameters including category_id, but only if it's a valid number
+        const categoryId = data.category_id && data.category_id > 0 ? data.category_id : undefined
+        reportData = await reportAPI.getPDFReport(data.year, monthValue, categoryId)
       }
       
       // Create download link for the blob
@@ -169,12 +191,12 @@ export default function ReportsPage() {
       link.href = url
       
       // Generate descriptive filename
-      const categoryName = data.category_id ? 
+      const categoryName = data.category_id && data.category_id > 0 ? 
         categories.find(c => c.id === data.category_id)?.name || 'filtered' : 
         'all-categories'
       
-      const monthName = data.month ? 
-        monthOptions.find(m => m.value === data.month)?.label.toLowerCase() : 
+      const monthName = monthValue && monthValue >= 1 && monthValue <= 12 ? 
+        monthOptions.find(m => m.value === String(monthValue))?.label.toLowerCase() : 
         'all-months'
         
       const fileName = `expense_report_${data.year}_${monthName}_${categoryName}.${data.report_type}`
@@ -187,11 +209,11 @@ export default function ReportsPage() {
       setSuccess(`Report has been generated and downloaded successfully!`)
       
       // Add new report to history
-      const categoryDetail = data.category_id ?
+      const categoryDetail = data.category_id && data.category_id > 0 ?
         ` (${categories.find(c => c.id === data.category_id)?.name})` : ''
         
-      const timeDetail = data.month ?
-        `${monthOptions.find(m => m.value === data.month)?.label} ${data.year}` :
+      const timeDetail = monthValue && monthValue >= 1 && monthValue <= 12 ?
+        `${monthOptions.find(m => m.value === String(monthValue))?.label} ${data.year}` :
         `${data.year}`
       
       const newReportItem: ReportHistoryItem = {
@@ -343,9 +365,8 @@ export default function ReportsPage() {
                 </label>
                 <select
                   className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  {...register('month', { valueAsNumber: true })}
+                  {...register('month')}
                 >
-                  <option value="">All Months</option>
                   {monthOptions.map(month => (
                     <option key={month.value} value={month.value}>{month.label}</option>
                   ))}
@@ -363,7 +384,10 @@ export default function ReportsPage() {
                 <div className="relative h-[107px]" >
                   <select
                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    {...register('category_id', { valueAsNumber: true })}
+                    {...register('category_id', { 
+                      valueAsNumber: true,
+                      setValueAs: (v) => v === '' ? null : Number(v)
+                    })}
                     disabled={isLoadingCategories}
                   >
                     <option value="">All Categories</option>
@@ -525,7 +549,8 @@ export default function ReportsPage() {
                                   onSubmit({
                                     year: new Date().getFullYear(),
                                     report_type: report.format.toLowerCase() as 'pdf' | 'csv',
-                                    month: new Date().getMonth() + 1
+                                    month: String(new Date().getMonth() + 1),
+                                    category_id: null
                                   });
                                 }}
                                 disabled={isLoading || regeneratingId === report.id}

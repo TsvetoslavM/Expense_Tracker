@@ -386,9 +386,9 @@ export const reportAPI = {
     })
     return response.data
   },
-  getPDFReport: async (year: number, month?: number) => {
+  getPDFReport: async (year: number, month?: number, category_id?: number) => {
     const response = await api.get('/api/reports/pdf', { 
-      params: { year, month },
+      params: { year, month, category_id },
       responseType: 'blob',
     })
     return response.data
