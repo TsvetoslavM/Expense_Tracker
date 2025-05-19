@@ -17,20 +17,27 @@ def generate_csv(expenses: List[Expense], user: User) -> bytes:
     try:
         # Create CSV file in memory
         output = io.StringIO()
-        writer = csv.writer(output)
+        writer = csv.writer(output, delimiter='\t')
         
-        # Write header
-        writer.writerow(["Date", "Category", "Description", "Amount", "Currency", "Notes"])
+        # Write header row with proper spacing
+        writer.writerow([
+            "Date".ljust(15),
+            "Category".ljust(15),
+            "Description".ljust(20),
+            "Amount".ljust(10),
+            "Currency".ljust(10),
+            "Notes".ljust(20)
+        ])
         
-        # Write expense data
+        # Write expense data in columns with proper spacing
         for expense in expenses:
             writer.writerow([
-                expense.date.strftime("%Y-%m-%d"),
-                expense.category.name if expense.category else "N/A",
-                expense.description or "",
-                expense.amount,
-                expense.currency,
-                expense.notes or "",
+                expense.date.strftime("%Y-%m-%d").ljust(15),
+                (expense.category.name if expense.category else "N/A").ljust(15),
+                (expense.description or "").ljust(20),
+                f"{expense.amount:.2f}".ljust(10),
+                expense.currency.ljust(10),
+                (expense.notes or "").ljust(20)
             ])
         
         return output.getvalue().encode('utf-8')
@@ -38,7 +45,7 @@ def generate_csv(expenses: List[Expense], user: User) -> bytes:
         print(f"Error generating CSV: {str(e)}")
         # Return basic CSV with error message if something goes wrong
         output = io.StringIO()
-        writer = csv.writer(output)
+        writer = csv.writer(output, delimiter='\t')
         writer.writerow(["Error generating report", str(e)])
         return output.getvalue().encode('utf-8')
 
