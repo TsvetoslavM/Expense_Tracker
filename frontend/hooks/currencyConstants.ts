@@ -16,7 +16,7 @@ export const exchangeRates: Record<string, number> = {
 };
 
 // Supported currencies
-export const supportedCurrencies = Object.keys(exchangeRates).sort();
+export const supportedCurrencies = Object.keys(exchangeRates).sort((a, b) => a.localeCompare(b));
 
 // Currency symbols mapping
 export const currencySymbols: Record<string, string> = {
