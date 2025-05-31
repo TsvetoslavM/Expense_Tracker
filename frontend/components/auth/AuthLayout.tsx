@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { ReactNode } from 'react'
-import { backgroundBlobAnimations, fadeInDown, scaleIn } from './AuthAnimations'
+import { passwordResetBlobAnimations, fadeInDown, scaleIn } from './AuthAnimations'
 
 interface AuthLayoutProps {
   children: ReactNode
@@ -15,19 +15,19 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
       <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
         <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]"></div>
         <motion.div
-          className={backgroundBlobAnimations.topRight.className}
-          animate={backgroundBlobAnimations.topRight.animate}
-          transition={backgroundBlobAnimations.topRight.transition}
+          className={passwordResetBlobAnimations.topRight.className}
+          animate={passwordResetBlobAnimations.topRight.animate}
+          transition={passwordResetBlobAnimations.topRight.transition}
         />
         <motion.div
-          className={backgroundBlobAnimations.bottomLeft.className}
-          animate={backgroundBlobAnimations.bottomLeft.animate}
-          transition={backgroundBlobAnimations.bottomLeft.transition}
+          className={passwordResetBlobAnimations.bottomLeft.className}
+          animate={passwordResetBlobAnimations.bottomLeft.animate}
+          transition={passwordResetBlobAnimations.bottomLeft.transition}
         />
         <motion.div
-          className={backgroundBlobAnimations.center.className}
-          animate={backgroundBlobAnimations.center.animate}
-          transition={backgroundBlobAnimations.center.transition}
+          className={passwordResetBlobAnimations.center.className}
+          animate={passwordResetBlobAnimations.center.animate}
+          transition={passwordResetBlobAnimations.center.transition}
         />
       </div>
 

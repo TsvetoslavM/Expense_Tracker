@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
 import { motion, AnimatePresence } from 'framer-motion'
+import { registerBlobAnimations, fadeInDown, scaleIn, fadeInUp } from '@/components/auth/AuthAnimations'
 
 // Form validation schema
 const registerSchema = z.object({
@@ -82,52 +83,32 @@ export default function RegisterPage() {
       <div className="absolute inset-0 bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50">
         <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]"></div>
         <motion.div
-          className="absolute -top-40 -right-40 w-80 h-80 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl opacity-20"
-          animate={{
-            scale: [1, 1.2, 1],
-            rotate: [0, 90, 0],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            ease: "linear"
-          }}
+          className={registerBlobAnimations.topRight.className}
+          animate={registerBlobAnimations.topRight.animate}
+          transition={registerBlobAnimations.topRight.transition}
         />
         <motion.div
-          className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20"
-          animate={{
-            scale: [1.2, 1, 1.2],
-            rotate: [90, 0, 90],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            ease: "linear"
-          }}
+          className={registerBlobAnimations.bottomLeft.className}
+          animate={registerBlobAnimations.bottomLeft.animate}
+          transition={registerBlobAnimations.bottomLeft.transition}
         />
         <motion.div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-400 rounded-full mix-blend-multiply filter blur-xl opacity-10"
-          animate={{
-            scale: [1, 1.1, 1],
-            rotate: [45, 90, 45],
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: "linear"
-          }}
+          className={registerBlobAnimations.center.className}
+          animate={registerBlobAnimations.center.animate}
+          transition={registerBlobAnimations.center.transition}
         />
       </div>
-
       <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
+        variants={fadeInDown}
+        initial="initial"
+        animate="animate"
         transition={{ duration: 0.5 }}
         className="relative sm:mx-auto sm:w-full sm:max-w-md"
       >
         <motion.div
-          initial={{ scale: 0.95 }}
-          animate={{ scale: 1 }}
+          variants={scaleIn}
+          initial="initial"
+          animate="animate"
           transition={{ duration: 0.5 }}
           className="text-center"
         >
@@ -139,10 +120,10 @@ export default function RegisterPage() {
           </h2>
         </motion.div>
       </motion.div>
-
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        variants={fadeInUp}
+        initial="initial"
+        animate="animate"
         transition={{ duration: 0.5, delay: 0.2 }}
         className="relative mt-8 sm:mx-auto sm:w-full sm:max-w-md"
       >
@@ -151,9 +132,10 @@ export default function RegisterPage() {
             <AnimatePresence>
               {error && (
                 <motion.div 
-                  initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                  variants={fadeInUp}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
                   className="bg-red-50/80 backdrop-blur-sm border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm shadow-sm"
                 >
                   {error}

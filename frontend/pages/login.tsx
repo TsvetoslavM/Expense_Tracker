@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
 import { motion, AnimatePresence } from 'framer-motion'
+import { loginBlobAnimations, fadeInDown, scaleIn, fadeInUp } from '@/components/auth/AuthAnimations'
 
 // Form validation schema
 const loginSchema = z.object({
@@ -80,40 +81,27 @@ export default function LoginPage() {
       <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
         <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]"></div>
         <motion.div
-          className="absolute -top-40 -right-40 w-80 h-80 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20"
-          animate={{
-            scale: [1, 1.2, 1],
-            rotate: [0, 90, 0],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            ease: "linear"
-          }}
+          className={loginBlobAnimations.topRight.className}
+          animate={loginBlobAnimations.topRight.animate}
+          transition={loginBlobAnimations.topRight.transition}
         />
         <motion.div
-          className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl opacity-20"
-          animate={{
-            scale: [1.2, 1, 1.2],
-            rotate: [90, 0, 90],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            ease: "linear"
-          }}
+          className={loginBlobAnimations.bottomLeft.className}
+          animate={loginBlobAnimations.bottomLeft.animate}
+          transition={loginBlobAnimations.bottomLeft.transition}
         />
       </div>
-
       <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
+        variants={fadeInDown}
+        initial="initial"
+        animate="animate"
         transition={{ duration: 0.5 }}
         className="relative sm:mx-auto sm:w-full sm:max-w-md"
       >
         <motion.div
-          initial={{ scale: 0.95 }}
-          animate={{ scale: 1 }}
+          variants={scaleIn}
+          initial="initial"
+          animate="animate"
           transition={{ duration: 0.5 }}
           className="text-center"
         >
@@ -125,26 +113,27 @@ export default function LoginPage() {
           </h2>
         </motion.div>
       </motion.div>
-
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        variants={fadeInUp}
+        initial="initial"
+        animate="animate"
         transition={{ duration: 0.5, delay: 0.2 }}
         className="relative mt-8 sm:mx-auto sm:w-full sm:max-w-md"
       >
         <div className="backdrop-blur-lg bg-white/80 py-8 px-4 shadow-2xl sm:rounded-2xl sm:px-10 border border-white/20 hover:border-blue-200/50 transition-all duration-300">
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <AnimatePresence>
-            {error && (
+              {error && (
                 <motion.div 
-                  initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                  variants={fadeInUp}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
                   className="bg-red-50/80 backdrop-blur-sm border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm shadow-sm"
                 >
-                {error}
+                  {error}
                 </motion.div>
-            )}
+              )}
             </AnimatePresence>
             
             <div>
