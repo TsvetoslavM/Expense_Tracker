@@ -30,110 +30,57 @@ export const successCheckmark: Variants = {
   }
 }
 
-// Login page animations
-export const loginBlobAnimations = {
-  topRight: {
-    className: "absolute -top-40 -right-40 w-80 h-80 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20",
-    animate: {
+// Helper function to generate blob animations
+const createBlobAnimation = (position: 'topRight' | 'bottomLeft' | 'center', color: string, duration: number = 20) => {
+  const baseClassName = `absolute w-80 h-80 rounded-full mix-blend-multiply filter blur-xl opacity-20`;
+  let className = `${baseClassName} bg-${color}-400`;
+  let animate = {};
+  let transition = {
+    duration: duration,
+    repeat: Infinity,
+    ease: "linear" as const
+  };
+
+  if (position === 'topRight') {
+    className = `absolute -top-40 -right-40 w-80 h-80 rounded-full mix-blend-multiply filter blur-xl opacity-20 bg-${color}-400`;
+    animate = {
       scale: [1, 1.2, 1],
       rotate: [0, 90, 0],
-    },
-    transition: {
-      duration: 20,
-      repeat: Infinity,
-      ease: "linear"
-    }
-  },
-  bottomLeft: {
-    className: "absolute -bottom-40 -left-40 w-80 h-80 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl opacity-20",
-    animate: {
+    };
+  } else if (position === 'bottomLeft') {
+    className = `absolute -bottom-40 -left-40 w-80 h-80 rounded-full mix-blend-multiply filter blur-xl opacity-20 bg-${color}-400`;
+    animate = {
       scale: [1.2, 1, 1.2],
       rotate: [90, 0, 90],
-    },
-    transition: {
-      duration: 20,
-      repeat: Infinity,
-      ease: "linear"
-    }
+    };
+  } else if (position === 'center') {
+     className = `absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full mix-blend-multiply filter blur-xl opacity-10 bg-${color}-400`;
+    animate = {
+      scale: [1, 1.1, 1],
+      rotate: [45, 90, 45],
+    };
+    transition.duration = duration; // Use provided duration for center
   }
+
+  return { className, animate, transition };
+};
+
+// Login page animations
+export const loginBlobAnimations = {
+  topRight: createBlobAnimation('topRight', 'blue'),
+  bottomLeft: createBlobAnimation('bottomLeft', 'purple'),
 }
 
 // Register page animations
 export const registerBlobAnimations = {
-  topRight: {
-    className: "absolute -top-40 -right-40 w-80 h-80 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl opacity-20",
-    animate: {
-      scale: [1, 1.2, 1],
-      rotate: [0, 90, 0],
-    },
-    transition: {
-      duration: 20,
-      repeat: Infinity,
-      ease: "linear"
-    }
-  },
-  bottomLeft: {
-    className: "absolute -bottom-40 -left-40 w-80 h-80 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20",
-    animate: {
-      scale: [1.2, 1, 1.2],
-      rotate: [90, 0, 90],
-    },
-    transition: {
-      duration: 20,
-      repeat: Infinity,
-      ease: "linear"
-    }
-  },
-  center: {
-    className: "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-400 rounded-full mix-blend-multiply filter blur-xl opacity-10",
-    animate: {
-      scale: [1, 1.1, 1],
-      rotate: [45, 90, 45],
-    },
-    transition: {
-      duration: 15,
-      repeat: Infinity,
-      ease: "linear"
-    }
-  }
+  topRight: createBlobAnimation('topRight', 'purple'),
+  bottomLeft: createBlobAnimation('bottomLeft', 'blue'),
+  center: createBlobAnimation('center', 'indigo', 15),
 }
 
 // Password reset animations (for forgot-password and reset-password)
 export const passwordResetBlobAnimations = {
-  topRight: {
-    className: "absolute -top-40 -right-40 w-80 h-80 bg-emerald-400 rounded-full mix-blend-multiply filter blur-xl opacity-20",
-    animate: {
-      scale: [1, 1.2, 1],
-      rotate: [0, 90, 0],
-    },
-    transition: {
-      duration: 20,
-      repeat: Infinity,
-      ease: "linear"
-    }
-  },
-  bottomLeft: {
-    className: "absolute -bottom-40 -left-40 w-80 h-80 bg-cyan-400 rounded-full mix-blend-multiply filter blur-xl opacity-20",
-    animate: {
-      scale: [1.2, 1, 1.2],
-      rotate: [90, 0, 90],
-    },
-    transition: {
-      duration: 20,
-      repeat: Infinity,
-      ease: "linear"
-    }
-  },
-  center: {
-    className: "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-teal-400 rounded-full mix-blend-multiply filter blur-xl opacity-10",
-    animate: {
-      scale: [1, 1.1, 1],
-      rotate: [45, 90, 45],
-    },
-    transition: {
-      duration: 15,
-      repeat: Infinity,
-      ease: "linear"
-    }
-  }
+  topRight: createBlobAnimation('topRight', 'emerald'),
+  bottomLeft: createBlobAnimation('bottomLeft', 'cyan'),
+  center: createBlobAnimation('center', 'teal', 15),
 } 
