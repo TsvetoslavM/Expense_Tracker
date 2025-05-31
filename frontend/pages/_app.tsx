@@ -10,8 +10,11 @@ import { AuthProvider } from '@/context/AuthContext';
 function MyApp({ Component, pageProps }: AppProps) {
   const router = useRouter();
   
-  // Check if current page is login or register
-  const isAuthPage = router.pathname === '/login' || router.pathname === '/register';
+  // Check if current page is an auth-related page
+  const isAuthPage = router.pathname === '/login' || 
+                    router.pathname === '/register' || 
+                    router.pathname === '/forgot-password' ||
+                    router.pathname === '/reset-password';
   
   return (
     <AuthProvider>

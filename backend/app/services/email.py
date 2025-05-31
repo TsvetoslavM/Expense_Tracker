@@ -2,8 +2,11 @@ from datetime import datetime, timedelta
 import logging
 from pathlib import Path
 from typing import Any, Dict, Optional
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
-from fastapi import BackgroundTasks
+from fastapi import BackgroundTasks, HTTPException, status
 from fastapi.templating import Jinja2Templates
 from pydantic import EmailStr
 import jwt
@@ -74,8 +77,6 @@ async def send_email(
 ) -> None:
     """
     Send an email using the configured email settings.
-    This is a placeholder function that logs the email content.
-    In a production environment, you would implement actual email sending here.
     
     Args:
         background_tasks: FastAPI BackgroundTasks for async processing.
@@ -84,34 +85,43 @@ async def send_email(
         body: Email body content.
         template_name: Jinja2 template name.
     """
-    # In development, we'll just log that we would send an email
-    logger.info(
-        f"Would send email to {email_to} with subject: {subject}\n"
-        f"Body: {body}\n"
-        f"Using template: {template_name}"
-    )
-    
     # Check if email settings are configured
-    if not settings.MAIL_USERNAME or not settings.MAIL_SERVER:
-        logger.warning("Email settings not configured. Email would not be sent in production.")
-        return
-    
-    # In a real implementation, you would add code here to:
-    # 1. Render the email template with Jinja2
-    # 2. Connect to the SMTP server
-    # 3. Send the email
-    # 4. Handle any errors
-    
-    # For example with libraries like:
-    # - smtplib for SMTP
-    # - email.mime for message composition
-    # Or use a third-party service like SendGrid, Mailgun, etc.
-    
-    # Adding this function to background tasks would allow it to run asynchronously
-    # background_tasks.add_task(actual_send_function, ...)
-    
-    # Simulate successful sending
-    logger.info(f"Email to {email_to} would be sent successfully")
+    if not all([settings.MAIL_USERNAME, settings.MAIL_PASSWORD, settings.MAIL_SERVER]):
+        logger.warning("Email settings not configured. Email would not be sent.")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Email service is not configured. Please contact the administrator."
+        )
+
+    try:
+        # Create message
+        msg = MIMEMultipart()
+        msg['From'] = f"{settings.MAIL_FROM_NAME} <{settings.MAIL_FROM}>"
+        msg['To'] = email_to
+        msg['Subject'] = subject
+
+        # Render template
+        template = templates.get_template(template_name)
+        html_content = template.render(**body)
+        
+        # Attach HTML content
+        msg.attach(MIMEText(html_content, 'html'))
+
+        # Connect to SMTP server
+        with smtplib.SMTP(settings.MAIL_SERVER, settings.MAIL_PORT) as server:
+            if settings.MAIL_TLS:
+                server.starttls()
+            server.login(settings.MAIL_USERNAME, settings.MAIL_PASSWORD)
+            server.send_message(msg)
+            
+        logger.info(f"Email sent successfully to {email_to}")
+        
+    except Exception as e:
+        logger.error(f"Failed to send email: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to send email. Please try again later."
+        )
 
 
 async def send_password_reset_email(
@@ -127,6 +137,14 @@ async def send_password_reset_email(
         email_to: Recipient email address.
         token: Password reset token.
     """
+    # Check if email settings are configured
+    if not all([settings.MAIL_USERNAME, settings.MAIL_PASSWORD, settings.MAIL_SERVER]):
+        logger.warning("Email settings are not configured. Password reset email will not be sent.")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Email service is not configured. Please contact the administrator."
+        )
+
     reset_link = f"{settings.FRONTEND_URL}/reset-password?token={token}"
     
     subject = f"{settings.APP_NAME} - Password Reset"
