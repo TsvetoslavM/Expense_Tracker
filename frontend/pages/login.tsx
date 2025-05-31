@@ -135,16 +135,16 @@ export default function LoginPage() {
         <div className="backdrop-blur-lg bg-white/80 py-8 px-4 shadow-2xl sm:rounded-2xl sm:px-10 border border-white/20 hover:border-blue-200/50 transition-all duration-300">
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <AnimatePresence>
-              {error && (
+            {error && (
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.95, y: -10 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -10 }}
                   className="bg-red-50/80 backdrop-blur-sm border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm shadow-sm"
                 >
-                  {error}
+                {error}
                 </motion.div>
-              )}
+            )}
             </AnimatePresence>
             
             <div>
@@ -156,16 +156,16 @@ export default function LoginPage() {
                   whileFocus={{ scale: 1.01 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <input
-                    id="email"
-                    type="email"
-                    autoComplete="email"
+                <input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
                     className="block w-full appearance-none rounded-xl border border-gray-300 px-4 py-3 placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 sm:text-sm bg-white/50 backdrop-blur-sm"
-                    {...register('email')}
-                  />
+                  {...register('email')}
+                />
                 </motion.div>
                 <AnimatePresence>
-                  {errors.email && (
+                {errors.email && (
                     <motion.p 
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -174,7 +174,7 @@ export default function LoginPage() {
                     >
                       {errors.email.message}
                     </motion.p>
-                  )}
+                )}
                 </AnimatePresence>
               </div>
             </div>
@@ -188,16 +188,16 @@ export default function LoginPage() {
                   whileFocus={{ scale: 1.01 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <input
-                    id="password"
-                    type="password"
-                    autoComplete="current-password"
+                <input
+                  id="password"
+                  type="password"
+                  autoComplete="current-password"
                     className="block w-full appearance-none rounded-xl border border-gray-300 px-4 py-3 placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 sm:text-sm bg-white/50 backdrop-blur-sm"
-                    {...register('password')}
-                  />
+                  {...register('password')}
+                />
                 </motion.div>
                 <AnimatePresence>
-                  {errors.password && (
+                {errors.password && (
                     <motion.p 
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -206,7 +206,7 @@ export default function LoginPage() {
                     >
                       {errors.password.message}
                     </motion.p>
-                  )}
+                )}
                 </AnimatePresence>
               </div>
             </div>
@@ -263,19 +263,19 @@ export default function LoginPage() {
           
           {/* Debug information */}
           <AnimatePresence>
-            {debugInfo && (
+          {debugInfo && (
               <motion.div 
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
                 className="mt-6 p-4 bg-gray-100/80 backdrop-blur-sm rounded-xl"
               >
-                <h3 className="text-sm font-medium text-gray-700 mb-2">Debug Information</h3>
-                <pre className="text-xs overflow-auto max-h-40">
-                  {JSON.stringify(debugInfo, null, 2)}
-                </pre>
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Debug Information</h3>
+              <pre className="text-xs overflow-auto max-h-40">
+                {JSON.stringify(debugInfo, null, 2)}
+              </pre>
               </motion.div>
-            )}
+          )}
           </AnimatePresence>
         </div>
       </motion.div>

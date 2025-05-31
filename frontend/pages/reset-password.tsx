@@ -69,7 +69,7 @@ export default function ResetPasswordPage() {
       setIsLoading(false)
     }
   }
-
+  
   if (!isMounted) {
     return null // Prevent hydration mismatch
   }
@@ -200,7 +200,7 @@ export default function ResetPasswordPage() {
       >
         <div className="backdrop-blur-lg bg-white/80 py-8 px-4 shadow-2xl sm:rounded-2xl sm:px-10 border border-white/20 hover:border-emerald-200/50 transition-all duration-300">
           <AnimatePresence mode="wait">
-            {!isSubmitted ? (
+          {!isSubmitted ? (
               <motion.div
                 key="form"
                 initial={{ opacity: 0, y: 20 }}
@@ -208,39 +208,39 @@ export default function ResetPasswordPage() {
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
               >
-                <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+            <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
                   <AnimatePresence>
-                    {error && (
+              {error && (
                       <motion.div 
                         initial={{ opacity: 0, scale: 0.95, y: -10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: -10 }}
                         className="bg-red-50/80 backdrop-blur-sm border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm shadow-sm"
                       >
-                        {error}
+                  {error}
                       </motion.div>
-                    )}
+              )}
                   </AnimatePresence>
-                  
-                  <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                      New Password
-                    </label>
-                    <div className="mt-1">
+              
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  New Password
+                </label>
+                <div className="mt-1">
                       <motion.div
                         whileFocus={{ scale: 1.01 }}
                         transition={{ duration: 0.2 }}
                       >
-                        <input
-                          id="password"
-                          type="password"
-                          autoComplete="new-password"
+                  <input
+                    id="password"
+                    type="password"
+                    autoComplete="new-password"
                           className="block w-full appearance-none rounded-xl border border-gray-300 px-4 py-3 placeholder-gray-400 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all duration-200 sm:text-sm bg-white/50 backdrop-blur-sm"
-                          {...register('password')}
-                        />
+                    {...register('password')}
+                  />
                       </motion.div>
                       <AnimatePresence>
-                        {errors.password && (
+                  {errors.password && (
                           <motion.p 
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -249,30 +249,30 @@ export default function ResetPasswordPage() {
                           >
                             {errors.password.message}
                           </motion.p>
-                        )}
+                  )}
                       </AnimatePresence>
-                    </div>
-                  </div>
+                </div>
+              </div>
 
-                  <div>
-                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                      Confirm New Password
-                    </label>
-                    <div className="mt-1">
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                  Confirm New Password
+                </label>
+                <div className="mt-1">
                       <motion.div
                         whileFocus={{ scale: 1.01 }}
                         transition={{ duration: 0.2 }}
                       >
-                        <input
-                          id="confirmPassword"
-                          type="password"
-                          autoComplete="new-password"
+                  <input
+                    id="confirmPassword"
+                    type="password"
+                    autoComplete="new-password"
                           className="block w-full appearance-none rounded-xl border border-gray-300 px-4 py-3 placeholder-gray-400 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all duration-200 sm:text-sm bg-white/50 backdrop-blur-sm"
-                          {...register('confirmPassword')}
-                        />
+                    {...register('confirmPassword')}
+                  />
                       </motion.div>
                       <AnimatePresence>
-                        {errors.confirmPassword && (
+                  {errors.confirmPassword && (
                           <motion.p 
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -281,17 +281,17 @@ export default function ResetPasswordPage() {
                           >
                             {errors.confirmPassword.message}
                           </motion.p>
-                        )}
+                  )}
                       </AnimatePresence>
-                    </div>
-                  </div>
+                </div>
+              </div>
 
-                  <div>
-                    <Button
-                      type="submit"
+              <div>
+                <Button
+                  type="submit"
                       className="w-full py-3 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-700 hover:via-teal-700 hover:to-cyan-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
-                      disabled={isLoading}
-                    >
+                  disabled={isLoading}
+                >
                       {isLoading ? (
                         <span className="flex items-center justify-center">
                           <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -301,11 +301,11 @@ export default function ResetPasswordPage() {
                           Resetting...
                         </span>
                       ) : 'Reset Password'}
-                    </Button>
-                  </div>
-                </form>
+                </Button>
+              </div>
+            </form>
               </motion.div>
-            ) : (
+          ) : (
               <motion.div
                 key="success"
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -326,8 +326,8 @@ export default function ResetPasswordPage() {
                   className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-emerald-100 mb-4"
                 >
                   <svg className="h-8 w-8 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
                 </motion.div>
                 <motion.h3
                   initial={{ opacity: 0, y: 20 }}
@@ -343,7 +343,7 @@ export default function ResetPasswordPage() {
                   transition={{ delay: 0.4 }}
                   className="mt-2 text-sm text-gray-600"
                 >
-                  Your password has been reset successfully.
+                Your password has been reset successfully.
                 </motion.p>
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -351,15 +351,15 @@ export default function ResetPasswordPage() {
                   transition={{ delay: 0.5 }}
                   className="mt-6"
                 >
-                  <Link 
-                    href="/login" 
+                <Link 
+                  href="/login" 
                     className="font-medium text-emerald-600 hover:text-emerald-500 transition-colors duration-200 hover:underline"
-                  >
-                    Back to login
-                  </Link>
+                >
+                  Back to login
+                </Link>
                 </motion.div>
               </motion.div>
-            )}
+          )}
           </AnimatePresence>
         </div>
       </motion.div>

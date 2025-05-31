@@ -231,37 +231,37 @@ export default function SettingsPage() {
       </motion.div>
       
       <AnimatePresence mode="wait">
-        {updateSuccess && (
+      {updateSuccess && (
           <motion.div 
             initial={{ opacity: 0, y: -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-md flex items-center"
           >
-            <div className="flex-shrink-0 mr-3">
-              <Check className="h-5 w-5 text-green-500" />
-            </div>
-            <div>
-              <p className="text-sm text-green-700">{updateSuccess}</p>
-            </div>
+          <div className="flex-shrink-0 mr-3">
+            <Check className="h-5 w-5 text-green-500" />
+          </div>
+          <div>
+            <p className="text-sm text-green-700">{updateSuccess}</p>
+          </div>
           </motion.div>
-        )}
-        
-        {updateError && (
+      )}
+      
+      {updateError && (
           <motion.div 
             initial={{ opacity: 0, y: -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-md flex items-center"
           >
-            <div className="flex-shrink-0 mr-3">
+          <div className="flex-shrink-0 mr-3">
               <AlertTriangle className="h-5 w-5 text-red-500" />
-            </div>
-            <div>
-              <p className="text-sm text-red-700">{updateError}</p>
-            </div>
+          </div>
+          <div>
+            <p className="text-sm text-red-700">{updateError}</p>
+          </div>
           </motion.div>
-        )}
+      )}
       </AnimatePresence>
       
       <Tabs defaultValue="profile" className="space-y-6" onValueChange={setActiveTab}>
@@ -290,9 +290,9 @@ export default function SettingsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <Card className="border-none shadow-lg hover:shadow-xl transition-shadow duration-200">
-              <div className="p-6">
-                <form onSubmit={handleProfileSubmit(onProfileSubmit)}>
+          <Card className="border-none shadow-lg hover:shadow-xl transition-shadow duration-200">
+            <div className="p-6">
+              <form onSubmit={handleProfileSubmit(onProfileSubmit)}>
                   <div className="space-y-6">
                     <motion.div
                       initial={{ opacity: 0, x: -20 }}
@@ -302,9 +302,9 @@ export default function SettingsPage() {
                       <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 mb-8">
                         <h2 className="text-2xl font-bold flex items-center mb-6 text-indigo-900">
                           <User className="h-6 w-6 mr-3 text-indigo-600" />
-                          Personal Information
-                        </h2>
-                        
+                    Personal Information
+                  </h2>
+                  
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                           <motion.div 
                             initial={{ opacity: 0, y: 20 }}
@@ -314,10 +314,10 @@ export default function SettingsPage() {
                           >
                             <Label htmlFor="first_name" className="text-sm font-semibold text-gray-700">First Name</Label>
                             <div className="relative group">
-                              <Input
-                                id="first_name"
-                                placeholder="John"
-                                {...registerProfile('first_name')}
+                      <Input
+                        id="first_name"
+                        placeholder="John"
+                        {...registerProfile('first_name')}
                                 className={`${profileErrors.first_name ? 'border-red-500' : 'border-gray-200'} 
                                   transition-all duration-200 
                                   hover:border-indigo-300 
@@ -330,7 +330,7 @@ export default function SettingsPage() {
                               <div className="absolute inset-0 rounded-md pointer-events-none ring-1 ring-inset ring-gray-200 group-hover:ring-indigo-300 transition-all duration-200"></div>
                             </div>
                             <AnimatePresence>
-                              {profileErrors.first_name && (
+                      {profileErrors.first_name && (
                                 <motion.p 
                                   initial={{ opacity: 0, y: -10 }}
                                   animate={{ opacity: 1, y: 0 }}
@@ -339,10 +339,10 @@ export default function SettingsPage() {
                                 >
                                   {profileErrors.first_name.message}
                                 </motion.p>
-                              )}
+                      )}
                             </AnimatePresence>
                           </motion.div>
-                          
+                    
                           <motion.div 
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -351,10 +351,10 @@ export default function SettingsPage() {
                           >
                             <Label htmlFor="last_name" className="text-sm font-semibold text-gray-700">Last Name</Label>
                             <div className="relative group">
-                              <Input
-                                id="last_name"
-                                placeholder="Doe"
-                                {...registerProfile('last_name')}
+                      <Input
+                        id="last_name"
+                        placeholder="Doe"
+                        {...registerProfile('last_name')}
                                 className={`${profileErrors.last_name ? 'border-red-500' : 'border-gray-200'} 
                                   transition-all duration-200 
                                   hover:border-indigo-300 
@@ -367,7 +367,7 @@ export default function SettingsPage() {
                               <div className="absolute inset-0 rounded-md pointer-events-none ring-1 ring-inset ring-gray-200 group-hover:ring-indigo-300 transition-all duration-200"></div>
                             </div>
                             <AnimatePresence>
-                              {profileErrors.last_name && (
+                      {profileErrors.last_name && (
                                 <motion.p 
                                   initial={{ opacity: 0, y: -10 }}
                                   animate={{ opacity: 1, y: 0 }}
@@ -376,11 +376,11 @@ export default function SettingsPage() {
                                 >
                                   {profileErrors.last_name.message}
                                 </motion.p>
-                              )}
+                      )}
                             </AnimatePresence>
                           </motion.div>
-                        </div>
-                        
+                  </div>
+                  
                         <motion.div 
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -389,14 +389,14 @@ export default function SettingsPage() {
                         >
                           <Label htmlFor="email" className="flex items-center text-sm font-semibold text-gray-700">
                             <Mail className="h-4 w-4 mr-2 text-indigo-600" />
-                            Email Address
-                          </Label>
+                      Email Address
+                    </Label>
                           <div className="relative group">
-                            <Input
-                              id="email"
-                              type="email"
-                              placeholder="john.doe@example.com"
-                              {...registerProfile('email')}
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="john.doe@example.com"
+                      {...registerProfile('email')}
                               className={`${profileErrors.email ? 'border-red-500' : 'border-gray-200'} 
                                 transition-all duration-200 
                                 hover:border-indigo-300 
@@ -409,7 +409,7 @@ export default function SettingsPage() {
                             <div className="absolute inset-0 rounded-md pointer-events-none ring-1 ring-inset ring-gray-200 group-hover:ring-indigo-300 transition-all duration-200"></div>
                           </div>
                           <AnimatePresence>
-                            {profileErrors.email && (
+                    {profileErrors.email && (
                               <motion.p 
                                 initial={{ opacity: 0, y: -10 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -418,10 +418,10 @@ export default function SettingsPage() {
                               >
                                 {profileErrors.email.message}
                               </motion.p>
-                            )}
+                    )}
                           </AnimatePresence>
                         </motion.div>
-                      </div>
+                  </div>
                     </motion.div>
                     
                     <motion.div
@@ -432,9 +432,9 @@ export default function SettingsPage() {
                       <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-6">
                         <h2 className="text-2xl font-bold flex items-center mb-6 text-indigo-900">
                           <Database className="h-6 w-6 mr-3 text-indigo-600" />
-                          Preferences
-                        </h2>
-                        
+                    Preferences
+                  </h2>
+                  
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                           <motion.div 
                             initial={{ opacity: 0, y: 20 }}
@@ -444,9 +444,9 @@ export default function SettingsPage() {
                           >
                             <Label htmlFor="currency" className="text-sm font-semibold text-gray-700">Default Currency</Label>
                             <div className="relative group">
-                              <select
-                                id="currency"
-                                {...registerProfile('currency')}
+                      <select
+                        id="currency"
+                        {...registerProfile('currency')}
                                 className="w-full rounded-md border-gray-200 shadow-sm 
                                   transition-all duration-200 
                                   hover:border-indigo-300 
@@ -456,13 +456,13 @@ export default function SettingsPage() {
                                   group-hover:bg-white
                                   appearance-none
                                   pl-3 pr-10 py-2"
-                              >
-                                {currencies.map((currency) => (
-                                  <option key={currency.code} value={currency.code}>
-                                    {currency.name}
-                                  </option>
-                                ))}
-                              </select>
+                      >
+                        {currencies.map((currency) => (
+                          <option key={currency.code} value={currency.code}>
+                            {currency.name}
+                          </option>
+                        ))}
+                      </select>
                               <div className="absolute inset-0 rounded-md pointer-events-none ring-1 ring-inset ring-gray-200 group-hover:ring-indigo-300 transition-all duration-200"></div>
                               <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                                 <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
@@ -471,7 +471,7 @@ export default function SettingsPage() {
                               </div>
                             </div>
                             <AnimatePresence>
-                              {profileErrors.currency && (
+                      {profileErrors.currency && (
                                 <motion.p 
                                   initial={{ opacity: 0, y: -10 }}
                                   animate={{ opacity: 1, y: 0 }}
@@ -480,11 +480,11 @@ export default function SettingsPage() {
                                 >
                                   {profileErrors.currency.message}
                                 </motion.p>
-                              )}
+                      )}
                             </AnimatePresence>
                           </motion.div>
                         </div>
-                      </div>
+                    </div>
                     </motion.div>
                     
                     <motion.div
@@ -493,25 +493,25 @@ export default function SettingsPage() {
                       transition={{ duration: 0.5, delay: 0.4 }}
                       className="pt-6"
                     >
-                      <Button 
-                        type="submit" 
+                    <Button 
+                      type="submit" 
                         className="w-full md:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02]"
-                        disabled={isUpdating}
-                      >
-                        {isUpdating ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Updating...
-                          </>
-                        ) : (
-                          'Save Changes'
-                        )}
-                      </Button>
+                      disabled={isUpdating}
+                    >
+                      {isUpdating ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Updating...
+                        </>
+                      ) : (
+                        'Save Changes'
+                      )}
+                    </Button>
                     </motion.div>
-                  </div>
-                </form>
-              </div>
-            </Card>
+                </div>
+              </form>
+            </div>
+          </Card>
           </motion.div>
         </TabsContent>
         
@@ -521,9 +521,9 @@ export default function SettingsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <Card className="border-none shadow-lg hover:shadow-xl transition-shadow duration-200">
-              <div className="p-6">
-                <form onSubmit={handlePasswordSubmit(onPasswordSubmit)}>
+          <Card className="border-none shadow-lg hover:shadow-xl transition-shadow duration-200">
+            <div className="p-6">
+              <form onSubmit={handlePasswordSubmit(onPasswordSubmit)}>
                   <div className="space-y-6">
                     <motion.div
                       initial={{ opacity: 0, x: -20 }}
@@ -533,9 +533,9 @@ export default function SettingsPage() {
                       <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 mb-8">
                         <h2 className="text-2xl font-bold flex items-center mb-6 text-indigo-900">
                           <Lock className="h-6 w-6 mr-3 text-indigo-600" />
-                          Change Password
-                        </h2>
-                        
+                    Change Password
+                  </h2>
+                  
                         <div className="space-y-6">
                           <motion.div 
                             initial={{ opacity: 0, y: 20 }}
@@ -545,11 +545,11 @@ export default function SettingsPage() {
                           >
                             <Label htmlFor="current_password" className="text-sm font-semibold text-gray-700">Current Password</Label>
                             <div className="relative group">
-                              <Input
-                                id="current_password"
-                                type={showCurrentPassword ? "text" : "password"}
-                                placeholder="••••••••"
-                                {...registerPassword('current_password')}
+                        <Input
+                          id="current_password"
+                          type={showCurrentPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          {...registerPassword('current_password')}
                                 className={`${passwordErrors.current_password ? 'border-red-500' : 'border-gray-200'} 
                                   pr-10 transition-all duration-200 
                                   hover:border-indigo-300 
@@ -560,20 +560,20 @@ export default function SettingsPage() {
                                   shadow-sm`}
                               />
                               <div className="absolute inset-0 rounded-md pointer-events-none ring-1 ring-inset ring-gray-200 group-hover:ring-indigo-300 transition-all duration-200"></div>
-                              <button
-                                type="button"
-                                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 transition-colors duration-200"
-                                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                              >
-                                {showCurrentPassword ? (
-                                  <EyeOff className="h-4 w-4" />
-                                ) : (
-                                  <Eye className="h-4 w-4" />
-                                )}
-                              </button>
-                            </div>
+                        <button
+                          type="button"
+                          className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 transition-colors duration-200"
+                          onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                        >
+                          {showCurrentPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                             <AnimatePresence>
-                              {passwordErrors.current_password && (
+                      {passwordErrors.current_password && (
                                 <motion.p 
                                   initial={{ opacity: 0, y: -10 }}
                                   animate={{ opacity: 1, y: 0 }}
@@ -582,10 +582,10 @@ export default function SettingsPage() {
                                 >
                                   {passwordErrors.current_password.message}
                                 </motion.p>
-                              )}
+                      )}
                             </AnimatePresence>
                           </motion.div>
-                          
+                    
                           <motion.div 
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -594,11 +594,11 @@ export default function SettingsPage() {
                           >
                             <Label htmlFor="new_password" className="text-sm font-semibold text-gray-700">New Password</Label>
                             <div className="relative group">
-                              <Input
-                                id="new_password"
-                                type={showPassword ? "text" : "password"}
-                                placeholder="••••••••"
-                                {...registerPassword('new_password')}
+                        <Input
+                          id="new_password"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          {...registerPassword('new_password')}
                                 className={`${passwordErrors.new_password ? 'border-red-500' : 'border-gray-200'} 
                                   pr-10 transition-all duration-200 
                                   hover:border-indigo-300 
@@ -609,20 +609,20 @@ export default function SettingsPage() {
                                   shadow-sm`}
                               />
                               <div className="absolute inset-0 rounded-md pointer-events-none ring-1 ring-inset ring-gray-200 group-hover:ring-indigo-300 transition-all duration-200"></div>
-                              <button
-                                type="button"
-                                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 transition-colors duration-200"
-                                onClick={() => setShowPassword(!showPassword)}
-                              >
-                                {showPassword ? (
-                                  <EyeOff className="h-4 w-4" />
-                                ) : (
-                                  <Eye className="h-4 w-4" />
-                                )}
-                              </button>
-                            </div>
+                        <button
+                          type="button"
+                          className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 transition-colors duration-200"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                             <AnimatePresence>
-                              {passwordErrors.new_password && (
+                      {passwordErrors.new_password && (
                                 <motion.p 
                                   initial={{ opacity: 0, y: -10 }}
                                   animate={{ opacity: 1, y: 0 }}
@@ -631,10 +631,10 @@ export default function SettingsPage() {
                                 >
                                   {passwordErrors.new_password.message}
                                 </motion.p>
-                              )}
+                      )}
                             </AnimatePresence>
                           </motion.div>
-                          
+                    
                           <motion.div 
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -643,11 +643,11 @@ export default function SettingsPage() {
                           >
                             <Label htmlFor="confirm_password" className="text-sm font-semibold text-gray-700">Confirm New Password</Label>
                             <div className="relative group">
-                              <Input
-                                id="confirm_password"
-                                type="password"
-                                placeholder="••••••••"
-                                {...registerPassword('confirm_password')}
+                      <Input
+                        id="confirm_password"
+                        type="password"
+                        placeholder="••••••••"
+                        {...registerPassword('confirm_password')}
                                 className={`${passwordErrors.confirm_password ? 'border-red-500' : 'border-gray-200'} 
                                   transition-all duration-200 
                                   hover:border-indigo-300 
@@ -660,7 +660,7 @@ export default function SettingsPage() {
                               <div className="absolute inset-0 rounded-md pointer-events-none ring-1 ring-inset ring-gray-200 group-hover:ring-indigo-300 transition-all duration-200"></div>
                             </div>
                             <AnimatePresence>
-                              {passwordErrors.confirm_password && (
+                      {passwordErrors.confirm_password && (
                                 <motion.p 
                                   initial={{ opacity: 0, y: -10 }}
                                   animate={{ opacity: 1, y: 0 }}
@@ -669,11 +669,11 @@ export default function SettingsPage() {
                                 >
                                   {passwordErrors.confirm_password.message}
                                 </motion.p>
-                              )}
+                      )}
                             </AnimatePresence>
                           </motion.div>
-                        </div>
-                      </div>
+                    </div>
+                  </div>
                     </motion.div>
                     
                     <motion.div
@@ -682,25 +682,25 @@ export default function SettingsPage() {
                       transition={{ duration: 0.5, delay: 0.5 }}
                       className="pt-6"
                     >
-                      <Button 
-                        type="submit" 
+                    <Button 
+                      type="submit" 
                         className="w-full md:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02]"
-                        disabled={isUpdating}
-                      >
-                        {isUpdating ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Updating...
-                          </>
-                        ) : (
-                          'Update Password'
-                        )}
-                      </Button>
+                      disabled={isUpdating}
+                    >
+                      {isUpdating ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Updating...
+                        </>
+                      ) : (
+                        'Update Password'
+                      )}
+                    </Button>
                     </motion.div>
-                  </div>
-                </form>
-              </div>
-            </Card>
+                </div>
+              </form>
+            </div>
+          </Card>
           </motion.div>
           
           <motion.div
@@ -708,28 +708,28 @@ export default function SettingsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.6 }}
           >
-            <Card className="border-none shadow-lg hover:shadow-xl transition-shadow duration-200">
-              <div className="p-6">
+          <Card className="border-none shadow-lg hover:shadow-xl transition-shadow duration-200">
+            <div className="p-6">
                 <div className="bg-gradient-to-r from-red-50 to-pink-50 rounded-xl p-6">
                   <h2 className="text-2xl font-bold flex items-center text-red-900 mb-4">
                     <Trash2 className="h-6 w-6 mr-3 text-red-600" />
-                    Delete Account
-                  </h2>
-                  
+                Delete Account
+              </h2>
+              
                   <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-                    Permanently delete your account and all of your data. This action cannot be undone.
-                  </p>
-                  
-                  <Button 
-                    variant="destructive" 
-                    onClick={handleDeleteAccount}
+                Permanently delete your account and all of your data. This action cannot be undone.
+              </p>
+              
+              <Button 
+                variant="destructive" 
+                onClick={handleDeleteAccount}
                     className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02]"
-                  >
-                    Delete Account
-                  </Button>
+              >
+                Delete Account
+              </Button>
                 </div>
-              </div>
-            </Card>
+            </div>
+          </Card>
           </motion.div>
         </TabsContent>
       </Tabs>
