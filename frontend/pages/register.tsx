@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
 import { motion, AnimatePresence } from 'framer-motion'
 import { registerBlobAnimations, fadeInDown, scaleIn, fadeInUp } from '@/components/auth/AuthAnimations'
+import { AuthFormField } from '@/components/auth/AuthFormField'
 
 // Form validation schema
 const registerSchema = z.object({
@@ -143,167 +144,55 @@ export default function RegisterPage() {
               )}
             </AnimatePresence>
             
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address <span className="text-red-500">*</span>
-              </label>
-              <div className="mt-1">
-                <motion.div
-                  whileFocus={{ scale: 1.01 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <input
-                    id="email"
-                    type="email"
-                    autoComplete="email"
-                    className="block w-full appearance-none rounded-xl border border-gray-300 px-4 py-3 placeholder-gray-400 shadow-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 sm:text-sm bg-white/50 backdrop-blur-sm"
-                    {...register('email')}
-                  />
-                </motion.div>
-                <AnimatePresence>
-                  {errors.email && (
-                    <motion.p 
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="mt-1 text-sm text-red-600"
-                    >
-                      {errors.email.message}
-                    </motion.p>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
+            <AuthFormField
+              label="Email address"
+              id="email"
+              type="email"
+              autoComplete="email"
+              error={errors.email}
+              register={register}
+              required
+            />
 
             <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
-              <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
-                  First name
-                </label>
-                <div className="mt-1">
-                  <motion.div
-                    whileFocus={{ scale: 1.01 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <input
-                      type="text"
-                      id="firstName"
-                      autoComplete="given-name"
-                      className="block w-full appearance-none rounded-xl border border-gray-300 px-4 py-3 placeholder-gray-400 shadow-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 sm:text-sm bg-white/50 backdrop-blur-sm"
-                      {...register('firstName')}
-                    />
-                  </motion.div>
-                  <AnimatePresence>
-                    {errors.firstName && (
-                      <motion.p 
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="mt-1 text-sm text-red-600"
-                      >
-                        {errors.firstName.message}
-                      </motion.p>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
+              <AuthFormField
+                label="First name"
+                id="firstName"
+                type="text"
+                autoComplete="given-name"
+                error={errors.firstName}
+                register={register}
+              />
 
-              <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
-                  Last name
-                </label>
-                <div className="mt-1">
-                  <motion.div
-                    whileFocus={{ scale: 1.01 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <input
-                      type="text"
-                      id="lastName"
-                      autoComplete="family-name"
-                      className="block w-full appearance-none rounded-xl border border-gray-300 px-4 py-3 placeholder-gray-400 shadow-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 sm:text-sm bg-white/50 backdrop-blur-sm"
-                      {...register('lastName')}
-                    />
-                  </motion.div>
-                  <AnimatePresence>
-                    {errors.lastName && (
-                      <motion.p 
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="mt-1 text-sm text-red-600"
-                      >
-                        {errors.lastName.message}
-                      </motion.p>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
+              <AuthFormField
+                label="Last name"
+                id="lastName"
+                type="text"
+                autoComplete="family-name"
+                error={errors.lastName}
+                register={register}
+              />
             </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password <span className="text-red-500">*</span>
-              </label>
-              <div className="mt-1">
-                <motion.div
-                  whileFocus={{ scale: 1.01 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <input
-                    id="password"
-                    type="password"
-                    autoComplete="new-password"
-                    className="block w-full appearance-none rounded-xl border border-gray-300 px-4 py-3 placeholder-gray-400 shadow-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 sm:text-sm bg-white/50 backdrop-blur-sm"
-                    {...register('password')}
-                  />
-                </motion.div>
-                <AnimatePresence>
-                  {errors.password && (
-                    <motion.p 
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="mt-1 text-sm text-red-600"
-                    >
-                      {errors.password.message}
-                    </motion.p>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
+            <AuthFormField
+              label="Password"
+              id="password"
+              type="password"
+              autoComplete="new-password"
+              error={errors.password}
+              register={register}
+              required
+            />
 
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                Confirm Password <span className="text-red-500">*</span>
-              </label>
-              <div className="mt-1">
-                <motion.div
-                  whileFocus={{ scale: 1.01 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <input
-                    id="confirmPassword"
-                    type="password"
-                    autoComplete="new-password"
-                    className="block w-full appearance-none rounded-xl border border-gray-300 px-4 py-3 placeholder-gray-400 shadow-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 sm:text-sm bg-white/50 backdrop-blur-sm"
-                    {...register('confirmPassword')}
-                  />
-                </motion.div>
-                <AnimatePresence>
-                  {errors.confirmPassword && (
-                    <motion.p 
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="mt-1 text-sm text-red-600"
-                    >
-                      {errors.confirmPassword.message}
-                    </motion.p>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
+            <AuthFormField
+              label="Confirm Password"
+              id="confirmPassword"
+              type="password"
+              autoComplete="new-password"
+              error={errors.confirmPassword}
+              register={register}
+              required
+            />
 
             <div>
               <label htmlFor="preferredCurrency" className="block text-sm font-medium text-gray-700">
