@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { FieldError } from 'react-hook-form'
+import { fadeInUp, successCheckmark } from './AuthAnimations'
 
 interface ErrorMessageProps {
   error: string | null
@@ -11,9 +12,10 @@ export function ErrorMessage({ error }: ErrorMessageProps) {
     <AnimatePresence>
       {error && (
         <motion.div 
-          initial={{ opacity: 0, scale: 0.95, y: -10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: -10 }}
+          variants={fadeInUp}
+          initial="initial"
+          animate="animate"
+          exit="exit"
           className="bg-red-50/80 backdrop-blur-sm border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm shadow-sm"
         >
           {error}
@@ -54,9 +56,10 @@ export function FormField({ label, id, type = 'text', autoComplete, error, regis
         <AnimatePresence>
           {error && (
             <motion.p 
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
+              variants={fadeInUp}
+              initial="initial"
+              animate="animate"
+              exit="exit"
               className="mt-1 text-sm text-red-600"
             >
               {error.message}
@@ -103,21 +106,16 @@ export function SuccessMessage({ title, message }: SuccessMessageProps) {
   return (
     <motion.div
       key="success"
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.3 }}
+      variants={fadeInUp}
+      initial="initial"
+      animate="animate"
+      exit="exit"
       className="text-center"
     >
       <motion.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ 
-          type: "spring",
-          stiffness: 260,
-          damping: 20,
-          delay: 0.2
-        }}
+        variants={successCheckmark}
+        initial="initial"
+        animate="animate"
         className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-emerald-100 mb-4"
       >
         <svg className="h-8 w-8 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -125,16 +123,18 @@ export function SuccessMessage({ title, message }: SuccessMessageProps) {
         </svg>
       </motion.div>
       <motion.h3
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        variants={fadeInUp}
+        initial="initial"
+        animate="animate"
         transition={{ delay: 0.3 }}
         className="text-lg font-medium text-gray-900"
       >
         {title}
       </motion.h3>
       <motion.p
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        variants={fadeInUp}
+        initial="initial"
+        animate="animate"
         transition={{ delay: 0.4 }}
         className="mt-2 text-sm text-gray-600"
       >
