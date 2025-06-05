@@ -11,6 +11,14 @@ const nextConfig = {
       ? 'https://expense-tracker-api-un6a.onrender.com'
       : 'http://localhost:8000',
   },
+  compiler: {
+    // Enables the styled-components SWC transform
+    styledComponents: true,
+  },
+  experimental: {
+    // This ensures proper JSX handling
+    forceSwcTransforms: true,
+  },
 }
 
 module.exports = nextConfig

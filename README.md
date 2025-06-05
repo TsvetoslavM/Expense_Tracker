@@ -16,7 +16,7 @@
   <img src="https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite"/>
 </p>
 
-Check out [💰 Can try it 💰](https://expense-tracker-zwetoslaw-gmailcoms-projects.vercel.app/login).
+Check out [💰 Try it now 💰](https://expense-tracker-zwetoslaw-gmailcoms-projects.vercel.app/login).
 </div>
 
 ## 📋 Features
@@ -28,7 +28,6 @@ Check out [💰 Can try it 💰](https://expense-tracker-zwetoslaw-gmailcoms-pro
 - **📱 Responsive Design**: Works seamlessly on desktop, tablet, and mobile
 - **🌈 Customizable Categories**: Organize expenses your way with colored categories
 - **🔐 Secure Authentication**: Keep your financial data private
-
 
 ## 🚀 Quick Start
 
@@ -83,102 +82,149 @@ For more information about the CI/CD process, see [CI/CD Process](docs/ci_cd_pro
 ## 📚 User Stories
 
 ### For Regular Users:
-1. **Като нов потребител**, искам да се регистрирам в системата, за да започна да проследявам разходите си.
-2. **Като регистриран потребител**, искам да вляза в системата чрез имейл и парола, за да достъпя данните си.
-3. **Като потребител**, искам да мога да въвеждам нови разходи, за да следя къде отиват парите ми.
-4. **Като потребител**, искам да категоризирам разходите си, за да имам по-добър поглед върху харченето си.
-5. **Като потребител**, искам да виждам обобщение на разходите си на Dashboard, за да имам бърз поглед върху финансовото си състояние.
-6. **Като потребител**, искам да задавам бюджети по категории, за да контролирам разходите си.
-7. **Като потребител**, искам да генерирам отчети за определен период, за да анализирам финансовото си поведение.
-8. **Като потребител**, искам да получавам известия, когато наближа или надвиша бюджета си, за да коригирам навиците си на харчене.
-9. **Като потребител**, искам да мога да редактирам или изтривам разходи, в случай на грешка при въвеждането.
-10. **Като потребител**, искам да мога да персонализирам категориите си с различни цветове, за да ги разпознавам по-лесно визуално.
+1. **As a new user**, I want to register in the system to start tracking my expenses.
+2. **As a registered user**, I want to log in to the system using email and password to access my data.
+3. **As a user**, I want to be able to enter new expenses to track where my money goes.
+4. **As a user**, I want to categorize my expenses to have a better overview of my spending.
+5. **As a user**, I want to see a summary of my expenses on the Dashboard to quickly assess my financial status.
+6. **As a user**, I want to set budgets by category to control my expenses.
+7. **As a user**, I want to generate reports for a specific period to analyze my financial behavior.
+8. **As a user**, I want to receive notifications when I approach or exceed my budget to adjust my spending habits.
+9. **As a user**, I want to be able to edit or delete expenses in case of input errors.
+10. **As a user**, I want to customize my categories with different colors for easier visual recognition.
 
-### За Администратори:
-11. **Като администратор**, искам да виждам списък на всички потребители, за да управлявам правилно системата.
-12. **Като администратор**, искам да мога да деактивирам акаунти, ако е необходимо за сигурността на системата.
-13. **Като администратор**, искам да имам достъп до статистика за използването на системата, за да оптимизирам работата й.
+### For Administrators:
+11. **As an administrator**, I want to see a list of all users to properly manage the system.
+12. **As an administrator**, I want to be able to deactivate accounts if necessary for system security.
+13. **As an administrator**, I want to have access to system usage statistics to optimize its operation.
 
 ## 🔄 Use Cases
 
-### UC1: Регистрация на нов потребител
-**User**: Нерегистриран потребител
-**Goal**: Създаване на нов акаунт в системата
-**Precondition**: Потребителят има валиден имейл адрес
+### UC1: New User Registration
+**User**: Unregistered user
+**Goal**: Create a new account in the system
+**Precondition**: User has a valid email address
 **Main Scenario**:
-1. Потребителят посещава началната страница на приложението
-2. Потребителят избира опцията "Регистрация"
-3. Системата показва форма за регистрация
-4. Потребителят въвежда своя имейл, парола и други изисквани данни
-5. Потребителят изпраща формата
-6. Системата валидира въведените данни
-7. Системата създава нов акаунт и записва информацията в базата данни
-8. Системата автоматично влиза потребителя в системата
-9. Системата пренасочва потребителя към Dashboard
+1. User visits the application's home page
+2. User selects the "Register" option
+3. System displays the registration form
+4. User enters their email, password, and other required data
+5. User submits the form
+6. System validates the entered data
+7. System creates a new account and stores the information in the database
+8. System automatically logs the user in
+9. System redirects the user to the Dashboard
 **Alternative Scenario**:
-- Ако имейлът вече съществува, системата показва съобщение за грешка
-- Ако паролата не отговаря на изискванията за сигурност, системата показва подходящо съобщение
+- If the email already exists, the system displays an error message
+- If the password doesn't meet security requirements, the system shows an appropriate message
 
-### UC2: Въвеждане на нов разход
-**User**: Регистриран потребител
-**Goal**: Записване на нов разход в системата
-**Precondition**: Потребителят е влязъл в системата
+### UC2: Adding a New Expense
+**User**: Registered user
+**Goal**: Record a new expense in the system
+**Precondition**: User is logged into the system
 **Main Scenario**:
-1. Потребителят избира опцията "Добави разход" от навигацията
-2. Системата показва форма за въвеждане на разход
-3. Потребителят въвежда сума, категория, дата и описание на разхода
-4. Потребителят изпраща формата
-5. Системата валидира въведените данни
-6. Системата записва новия разход в базата данни
-7. Системата показва съобщение за успешно добавяне
-8. Системата обновява Dashboard с новата информация
+1. User selects "Add Expense" from the navigation
+2. System displays the expense entry form
+3. User enters amount, category, date, and description of the expense
+4. User submits the form
+5. System validates the entered data
+6. System records the new expense in the database
+7. System shows a success message
+8. System updates the Dashboard with the new information
 **Alternative Scenario**:
-- Ако въведените данни са невалидни, системата показва съобщение за грешка
+- If the entered data is invalid, the system displays an error message
 
-### UC3: Задаване на бюджет
-**User**: Регистриран потребител
-**Goal**: Създаване на бюджет за определена категория разходи
-**Precondition**: Потребителят е влязъл в системата и има създадени категории
+### UC3: Setting a Budget
+**User**: Registered user
+**Goal**: Create a budget for a specific expense category
+**Precondition**: User is logged in and has created categories
 **Main Scenario**:
-1. Потребителят избира секцията "Бюджети" от навигацията
-2. Системата показва списък с текущите бюджети и опция за добавяне на нов
-3. Потребителят избира "Добави бюджет"
-4. Системата показва форма за създаване на бюджет
-5. Потребителят избира категория, период (месец/година) и максимална сума
-6. Потребителят изпраща формата
-7. Системата валидира въведените данни
-8. Системата записва новия бюджет в базата данни
-9. Системата показва актуализиран списък с бюджети
+1. User selects the "Budgets" section from the navigation
+2. System displays a list of current budgets and an option to add new ones
+3. User selects "Add Budget"
+4. System displays the budget creation form
+5. User selects category, period (month/year), and maximum amount
+6. User submits the form
+7. System validates the entered data
+8. System records the new budget in the database
+9. System shows the updated list of budgets
 **Alternative Scenario**:
-- Ако бюджет за същата категория и период вече съществува, системата предлага да го редактира
+- If a budget for the same category and period already exists, the system offers to edit it
 
-### UC4: Генериране на отчет
-**User**: Регистриран потребител
-**Goal**: Създаване на детайлен отчет за определен период
-**Precondition**: Потребителят е влязъл в системата и има записани разходи
+### UC4: Generating a Report
+**User**: Registered user
+**Goal**: Create a detailed report for a specific period
+**Precondition**: User is logged in and has recorded expenses
 **Main Scenario**:
-1. Потребителят избира секцията "Отчети" от навигацията
-2. Системата показва опции за генериране на отчет
-3. Потребителят избира тип отчет (PDF или CSV), период и други филтри
-4. Потребителят избира "Генерирай отчет"
-5. Системата обработва данните за избрания период
-6. Системата генерира отчет във избрания формат
-7. Системата предоставя отчета за изтегляне или визуализация
+1. User selects the "Reports" section from the navigation
+2. System displays report generation options
+3. User selects report type (PDF or CSV), period, and other filters
+4. User selects "Generate Report"
+5. System processes the data for the selected period
+6. System generates the report in the selected format
+7. System provides the report for download or visualization
 **Alternative Scenario**:
-- Ако няма данни за избрания период, системата показва съответно съобщение
+- If there is no data for the selected period, the system shows an appropriate message
 
-### UC5: Преглед на Dashboard
-**User**: Регистриран потребител
-**Goal**: Получаване на обобщена информация за финансовото състояние
-**Precondition**: Потребителят е влязъл в системата
+### UC5: Viewing the Dashboard
+**User**: Registered user
+**Goal**: Get an overview of financial status
+**Precondition**: User is logged into the system
 **Main Scenario**:
-1. Потребителят избира "Dashboard" от навигацията или влиза в системата
-2. Системата извлича данни за разходи, бюджети и други финансови показатели
-3. Системата обработва данните и генерира различни графики и статистики
-4. Системата показва информация за последните разходи, общата сума на разходите за текущия месец, прогрес на бюджетите и разпределение на разходите по категории
-5. Потребителят може да избере различни филтри или периоди за визуализация
+1. User selects "Dashboard" from the navigation or logs in
+2. System retrieves data for expenses, budgets, and other financial indicators
+3. System processes the data and generates various charts and statistics
+4. System displays information about recent expenses, total expenses for the current month, budget progress, and expense distribution by category
+5. User can select different filters or periods for visualization
 **Alternative Scenario**:
-- Ако потребителят няма въведени данни, системата показва насоки за започване
+- If the user has no entered data, the system shows guidelines for getting started
+
+## 🏗️ Infrastructure with Terraform
+
+The project uses Terraform to manage the infrastructure and deployment of both frontend and backend services. The infrastructure is defined in the `terraform` directory.
+
+### Prerequisites
+
+- Docker
+- Terraform CLI
+
+### Infrastructure Components
+
+- **Docker Network**: `expense_tracker_network` for container communication
+- **Docker Volume**: `expense_tracker_sqlite_data` for persistent database storage
+- **Backend Container**: FastAPI application running on port 8000
+- **Frontend Container**: Next.js application running on port 3000
+
+### Deployment
+
+1. Initialize Terraform:
+```bash
+cd terraform
+terraform init
+```
+
+2. Apply the infrastructure:
+```bash
+terraform apply
+```
+
+3. Access the applications:
+- Frontend: http://localhost:3000
+- Backend: http://localhost:8000
+
+### Infrastructure Management
+
+- **Health Checks**: Both containers have health checks configured
+- **Volume Persistence**: SQLite data is persisted using Docker volumes
+- **Network Isolation**: Containers communicate through a dedicated Docker network
+- **Environment Variables**: Configured through Terraform for both services
+
+### Cleanup
+
+To destroy the infrastructure:
+```bash
+terraform destroy
+```
 
 ## 📁 Project Structure
 
@@ -249,35 +295,25 @@ The project uses GitHub Actions for CI/CD:
 - **ReportLab**: PDF report generation
 
 ### Frontend
-- **Next.js**: React framework for the frontend
+- **Next.js**: React framework for production
 - **TypeScript**: Type-safe JavaScript
 - **TailwindCSS**: Utility-first CSS framework
-- **Shadcn UI**: Component library based on Radix UI
-- **React Hook Form**: Form handling with validation
-- **Zod**: Schema validation
-- **ApexCharts**: Interactive charts
+- **Shadcn UI**: UI components
+- **ApexCharts**: Data visualization
 
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📝 License
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## 👥 Contributing
 
-- [FastAPI](https://fastapi.tiangolo.com/) for the backend framework
-- [Next.js](https://nextjs.org/) for the frontend framework
-- [TailwindCSS](https://tailwindcss.com/) for styling
-- [Shadcn UI](https://ui.shadcn.com/) for UI components
-- [ApexCharts](https://apexcharts.com/) for data visualization
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📞 Contact
+
+For any questions or suggestions, please reach out to:
+- Email: your.email@example.com
+- GitHub: [Your GitHub Profile](https://github.com/yourusername)
 
 ---
 

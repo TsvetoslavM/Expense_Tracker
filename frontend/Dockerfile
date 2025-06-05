@@ -16,6 +16,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Set NODE_ENV to production for build
+ENV NODE_ENV=production
+
 # Build the Next.js application
 RUN npm run build
 
@@ -24,6 +27,7 @@ FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV PORT=3000
 
 # Copy necessary files from builder
 COPY --from=builder /app/next.config.js ./
